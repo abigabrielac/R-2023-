@@ -1,7 +1,43 @@
 #Evaluacion 1 ----
-library(tidyverse)
 ##Pregunta 1 ----
-###Pregunta 1.a) ----
+###Pregunta 1.a)----
+
+library(tidyverse)
+library(tibble)
+library (lubridate)
+link = "https://raw.githubusercontent.com/ChristianChiroqueR/Diplomado-2021---R-Intermedio/main/vacunados_apurimac.csv"
+covid_apurimac <- read_csv(link)
+as_tibble(covid_apurimac)
+#Existen 679 699 número de casos y 12 variables, entre ellas tenemos: FECHA_CORTE (col_double), UUID (col_double), GRUPO_RIESGO (col_character), EDAD(col_double)
+# SEXO(col_character), FECHA_VACUNACION(col_double), DOSIS(col_double), FABRICANTE (col_character), DIRESA (col_character)
+# DEPARTAMENTO (col_character), PROVINCIA (col_character), DISTRITO (col_character)
+
+###Pregunta 1.b)----
+
+vacuna_covid = covid_apurimac |>  # Usamos la función mutate para crear una nueva variable con los datos de la columna "FECHA_VACUNACION"
+  mutate (Fecha = ymd (FECHA_VACUNACION)) # Aplicamos función ymd() para separa por guiones la fecha.
+vacuna_covid
+
+###Pregunta 1.c)----
+
+Preguntac = vacuna_covid |> 
+  group_by(Fecha) |>  # Agrupamos en función a fecha
+  summarise (n= n()) |> # Hacemos el conteo de las fechas agrupadas, las cuales serán el número de personas por día que recibieron la vacuna
+  arrange(desc(n)) # ordenamos de manera descendente la información para ver el día donde hubo mayor número de vacunados
+Preguntac
+
+# Respuesta: El día con mayor número de vacunado fue el 28/08/2021
+
+###Pregunta 1.d)----
+
+preguntad = vacuna_covid  |> 
+  filter(DOSIS=="3") |> # Filtramos de acuerdo a la 3 dosis
+  group_by(DISTRITO) |>  # Agrupadmos según distrito
+  summarise(mayordosis= n ()) |> # Conteo de número de casos por distrito 
+  arrange(desc(mayordosis)) # Ordenamos de manera descendente la información
+preguntad
+
+# Respuesta: Los tres distritos con mayor número de vacunados con la tercera dosis son: Abancay, Andahuaylas y Talavera.
 
 ##Pregunta 2  ----
 ###Pregunta 2.a)  ----
