@@ -1,8 +1,8 @@
-# Pr??ctica Calificada N$B!k(B 2 - Grupo 4 ----
+# Practica Calificada N$B!k(B 2 - Grupo 4 ----
 ## Integrantes:
 ## - Gabriela Calvo
-## - Mauricio Ib????ez
-## - C??sar N????ez
+## - Mauricio Ibanez
+## - Cesar Nunez
 ## - Cristian Orellana
 
 # PREGUNTA 1 ----
@@ -86,6 +86,42 @@ anim_save("gif_P1A.gif", gif_P1A)
 
 
 ## PREGUNTA 1.B.----
+
+## Primero  creamos una nueva columna con la media movil por 3 meses con la funcion rollmean
+## Agrupamos los resultados por departamento, para que la media movil se aplique según esa variable
+## Para aplicar la función rollmean, nombramos a la nueva variable, designamos sobre la variable 
+## que se va a trabajar y de acuerdo al número de periodos.
+## En este caso sería cada tres meses.
+data_2 <- data_2 |> group_by(DEPARTAMENTO)|>  mutate(mes_MA=rollmean(x=casos_mes, 3, na.pad =TRUE, align = "right", 0))
+
+
+## Ahora, generamos la variable macroregion y designamos de acuerdo a lo solicitado. 
+## Usamos la función case_when para generar la nueva columa según las condiciones.
+data_2 <- data_2 |> 
+  mutate(Macroregion = case_when (DEPARTAMENTO == "AMAZONAS" ~ "Selva",
+                                  DEPARTAMENTO == "APURIMAC" ~ "Sur",
+                                  DEPARTAMENTO == "TACNA" ~ "Sur",
+                                  DEPARTAMENTO == "AYACUCHO" ~ "Centro",
+                                  DEPARTAMENTO == "HUANCAVELICA" ~ "Centro",
+                                  DEPARTAMENTO == "PASCO" ~ "Centro"))
+
+## Tomamos como insumo el codigo del gif 1A y en vez de que el grafico nos presente 
+## el nº de casos por mes, nos presentara la media movil por cada tres meses.
+## De acuerdo a la macroregion.
+
+gif_P1B <- data_2 |> 
+  ggplot(aes(x = n_mes, y = mes_MA, color = Macroregion))+ 
+  geom_line() +
+  labs(x = 'Numero de mes desde inicio de la pandemia',
+       y = 'Media móvil (3 meses)') +
+  transition_reveal(n_mes) +
+  labs(title = "Evolucion de la media movil de casos positivos por macroregion",
+       subtitle = "Mes: {round(frame_along, , digits = 0)}")
+
+
+## Finalmente, guardamos el grafico animado como un archivo gif
+anim_save("gif_P1B.gif", gif_P1B)
+
 
 
 # PREGUNTA 2 ----
