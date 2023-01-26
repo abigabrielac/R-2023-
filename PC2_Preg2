@@ -1,0 +1,122 @@
+ PREGUNTA N° 2  -------------
+
+#a) Diagnótico de valores perdidos ------
+
+#Para abrir bases de datos en formatos (SAS,spss,stata) instalamos el paquete haven
+
+install.packages("haven")
+library(haven)
+
+#Se utiliza la función "read_dta()" para leer el archivo de Stata
+
+datos <- read_dta("D:/QLab/Fundamentos en R/PC2/PER_2021_LAPOP_AmericasBarometer_v1.2_w.dta")
+
+#Se especifica la variables qeu se quiere obtener de la BD "datos"
+
+sublapop <- subset(datos, select = c("q2", "q1tb", "prov1t", "b2", "it1", "cses6n", "ur1new", "ing4", "gi0n", "anestg"))
+
+#se instlaa el paquete pacman para instalar y abrir los paquetes necesarios para el análsisi requerido.
+
+install.packages("pacman")
+library(pacman)
+p_load("VIM","DEoptimR","minqa","nloptr","simputation","mice","tidyverse","DMwR2","naniar")
+
+#Con el análisis descriptivo de las variables seleccionadas, se  observa la cantidad
+#de valores pertidos (NA's), siendo el más resaltante b2 con 1547 .
+
+summary(sublapop)
+
+#Se verifica que si existen valores perdidos
+anyNA(sublapop)
+any_na(sublapop)
+
+#Se hace un conteo general de la cantidad de NA's que hay en la BD
+n_miss(sublapop)
+
+#Se calcula el  porcentaje de valores perdidos en toda la BD.
+prop_miss(sublapop)
+pct_miss(sublapop)
+#Considerando el porcentaje con respecto al total de toda la BD se tiene un 6.069783%
+#lo cual no representa (según los parámetros) mayor relevancia.
+
+#Número total de valroes perdidos.
+n_complete(sublapop)
+
+#Se realiza el análisis de valoroes peridos por varibles, donde se observa qeu más del 50% 
+#de los datos de la variable b2 son datos perdidos (NA's)
+
+miss_var_summary(sublapop)
+
+miss_var_table(sublapop)
+
+#Lo observamos ahora en candidades brutas.
+miss_case_summary(sublapop)
+
+
+vis_miss(sublapop)
+
+#se observa el en un gráfico los datos perdidos, donde se verifica que la variblre b2 representa
+#un problema.
+
+gg_miss_case(sublapop)
+
+#se puede observar ciertas relaciones entre los valores perdidos
+#en respectivas varibles.
+gg_miss_upset(sublapop)
+
+a=aggr(sublapop,numbers=T)
+a
+summary(a)
+aggr(sublapop,numbers=T,sortcomb=TRUE,sortvar=TRUE,only.miss=TRUE)
+
+# Verificando el patrón VP visualmente
+
+## Mecanismo completamente aleatorio (MCAR)?  
+## O mecanismo aleatorio (MAR)?
+
+matrixplot(sublapop)
+# Foto de la dataset en colores.
+# Rojo: Los datos faltantes
+# Escala de grises según valores de vectores numéricos
+# Para poder inspeccionar necesitamos que la gráfica sea interactiva y utilizamos x11()
+x11()
+matrixplot(sublapop)
+# Analicemos la variable b2: sería MCAR o MAR?
+# MCAR: Valores perdidos no debería coincidir con ningún patrón en las otras variables. Aleatoriamente
+# MAR: Valores perdidos coinciden con ciertos valores de otras variables. 
+# Es MCAR no sigue ningún patrón.. 
+# 
+
+#b) Evaluación de las varibles ing4 e it1------
+
+#  Análisiss gráfico ----
+
+# Podemos hacer una prueba más minuciosa con un boxplot
+
+# Probemos con dos variables una con 16 dotasos perdidos(ing4) y la otra
+# con 107 casos perdidos (it1)
+
+  
+   VIM::pbox(sublapop[4:8], pos=1)
+
+  # Si los dos boxplot son iguales. No hay diferencia. MCAR
+  # Si son diferentes: Están asociados. MAR
+  # Conclusión es MCAR.
+
+  #   Prueba de hipótesis ----
+ 
+  # (Comparación de medias en dos grupos) 
+  # El grupo es la variable que presenta perdidos. 
+  
+  # Prueba t de medias (evaluar el mecanismo de la variable ing4)
+  # H0: No hay diferencia
+  # H1: Hay diferencia 
+  t.test(ing4 ~ is.na(it1), data=sublapop)
+  # Si el p valor < 0.05, rechaza la H0 y concluyes que hay diferencia. MAR
+  # Si el p valor > 0.05, no se rechaza la H0 y concluyes que no hay diferencia. MCAR
+  
+  # El p valor es mayor a 0.05 por lo que no se rechaza la H0,
+  # no hay diferencias por tanto es MCAR.
+  
+  
+  
