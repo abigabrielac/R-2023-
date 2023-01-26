@@ -60,10 +60,10 @@ gif_P1A <- data_2 |>
   ggplot() + 
   aes(x = n_mes, y = casos_mes, color = DEPARTAMENTO) + 
   geom_line() +
-  labs(x = 'N??mero de mes desde inicio de la pandemia',
-       y = 'N??mero de casos positivos al mes') +
+  labs(x = 'Numero de mes desde inicio de la pandemia',
+       y = 'Numero de casos positivos al mes') +
   transition_reveal(n_mes) +
-  labs(title = "Evoluci??n del n??mero de casos positivos seg??n departamento",
+  labs(title = "Evolucion del numero de casos positivos segun departamento",
        subtitle = "Mes: {round(frame_along, , digits = 0)}")
 
 ## Finalmente, guardamos el grafico animado como un archivo gif
@@ -88,15 +88,12 @@ anim_save("gif_P1A.gif", gif_P1A)
 ## PREGUNTA 1.B.----
 
 ## Primero  creamos una nueva columna con la media movil por 3 meses con la funcion rollmean
-## Agrupamos los resultados por departamento, para que la media movil se aplique según esa variable
-## Para aplicar la función rollmean, nombramos a la nueva variable, designamos sobre la variable 
-## que se va a trabajar y de acuerdo al número de periodos.
-## En este caso sería cada tres meses.
-data_2 <- data_2 |> group_by(DEPARTAMENTO)|>  mutate(mes_MA=rollmean(x=casos_mes, 3, na.pad =TRUE, align = "right", 0))
+## Agrupamos los resultados por departamento, para que la media movil se aplique seg?n esa variable
+## Para aplicar la funci?n rollmean, nombramos a la nueva variable, designamos sobre la variable 
+## que se va a trabajar y de acuerdo al n?mero de periodos.
+## En este caso ser?a cada tres meses.
+library(zoo)
 
-
-## Ahora, generamos la variable macroregion y designamos de acuerdo a lo solicitado. 
-## Usamos la función case_when para generar la nueva columa según las condiciones.
 data_2 <- data_2 |> 
   mutate(Macroregion = case_when (DEPARTAMENTO == "AMAZONAS" ~ "Selva",
                                   DEPARTAMENTO == "APURIMAC" ~ "Sur",
@@ -105,15 +102,26 @@ data_2 <- data_2 |>
                                   DEPARTAMENTO == "HUANCAVELICA" ~ "Centro",
                                   DEPARTAMENTO == "PASCO" ~ "Centro"))
 
+data_3 <- data_2 |> 
+  subset(select = -c(DEPARTAMENTO)) |> 
+  group_by(Macroregion, n_mes) |> 
+  summarise(casos_mes = sum(casos_mes)) |> 
+  mutate(mes_MA=rollmean(x=casos_mes, 3, na.pad =TRUE, align = "right", 0))
+
+
+## Ahora, generamos la variable macroregion y designamos de acuerdo a lo solicitado. 
+## Usamos la funci?n case_when para generar la nueva columa seg?n las condiciones.
+
+
 ## Tomamos como insumo el codigo del gif 1A y en vez de que el grafico nos presente 
-## el nº de casos por mes, nos presentara la media movil por cada tres meses.
+## el n? de casos por mes, nos presentara la media movil por cada tres meses.
 ## De acuerdo a la macroregion.
 
-gif_P1B <- data_2 |> 
+gif_P1B <-  data_3 |> 
   ggplot(aes(x = n_mes, y = mes_MA, color = Macroregion))+ 
   geom_line() +
   labs(x = 'Numero de mes desde inicio de la pandemia',
-       y = 'Media móvil (3 meses)') +
+       y = 'Media movil (3 meses)') +
   transition_reveal(n_mes) +
   labs(title = "Evolucion de la media movil de casos positivos por macroregion",
        subtitle = "Mes: {round(frame_along, , digits = 0)}")
@@ -128,9 +136,9 @@ anim_save("gif_P1B.gif", gif_P1B)
 ## A partir de este se desprenden las siguientes observaciones:
 
 
-##  - Se observan 2 picos de contagio según la media movil, en Julio del 2020 y febrero del 2021.
+##  - Se observan 2 picos de contagio seg?n la media movil, en Julio del 2020 y febrero del 2021.
 ##    No obstante, el primer pico se da en mayor dimension que el segundo. 
-##    Y los meses del segundo pico varían por macroregion. 
+##    Y los meses del segundo pico var?an por macroregion. 
 ##    Siendo para la macroregion sur en el mes de febrero y para las macroregiones selva
 ##    y centro, entre febrero y marzo.
 ##  - El primer pico de decenso se da en el mes de octubre de 2020, luego el media de casos aumenta y
@@ -138,12 +146,12 @@ anim_save("gif_P1B.gif", gif_P1B)
 ## 
 ## En cuanto al primer grafico, la principal diferencia se genera por el agrupamiento de los 
 ## departamentos por macroregion; pues, el segundo pico decrece porque Apurimac,
-## que tuvo un mayor número de casos en febrero de 2021 y Tacna que tuvo un pico de descenso
+## que tuvo un mayor n?mero de casos en febrero de 2021 y Tacna que tuvo un pico de descenso
 ## en esa fecha, forman parte de una misma macroregion. 
 
 # PREGUNTA 2 ----
 
-#a) Diagnostico de valores perdidos ------
+## a) Diagnostico de valores perdidos ------
 
 #Para abrir bases de datos en formatos (SAS,spss,stata) instalamos el paquete haven
 
@@ -182,7 +190,7 @@ pct_miss(sublapop)
 #Considerando el porcentaje con respecto al total de toda la BD se tiene un 6.069783%
 #lo cual no representa (segun los parametros) mayor relevancia.
 
-#NÃºmero total de valroes perdidos.
+#N??mero total de valroes perdidos.
 n_complete(sublapop)
 
 #Se realiza el analisis de valores peridos por variables, donde se observa que mas del 50% 
@@ -230,9 +238,9 @@ matrixplot(sublapop)
 # Es MCAR no sigue ningun patron.. 
 # 
 
-#b) Evaluacion de las varibles ing4 e it1------
+## b) Evaluacion de las varibles ing4 e it1------
 
-#  Analisis grafico ----
+##  Analisis grafico ----
 
 # Podemos hacer una prueba mas minuciosa con un boxplot
 
@@ -246,7 +254,7 @@ VIM::pbox(sublapop[4:8], pos=1)
 # Si son diferentes: Estan asociados. MAR
 # Conclusion es MCAR.
 
-#   Prueba de hipotesis ----
+##   Prueba de hipotesis ----
 
 # (Comparacion de medias en dos grupos) 
 # El grupo es la variable que presenta perdidos. 
