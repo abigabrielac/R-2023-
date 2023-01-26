@@ -136,18 +136,12 @@ anim_save("gif_P1B.gif", gif_P1B)
 ## A partir de este se desprenden las siguientes observaciones:
 
 
-##  - Se observan 2 picos de contagio seg?n la media movil, en Julio del 2020 y febrero del 2021.
-##    No obstante, el primer pico se da en mayor dimension que el segundo. 
-##    Y los meses del segundo pico var?an por macroregion. 
-##    Siendo para la macroregion sur en el mes de febrero y para las macroregiones selva
-##    y centro, entre febrero y marzo.
+##  - Se observan 2 picos de contagio segun la media movil, en Julio del 2020 y febrero del 2021.
+##    Para el caso de la macroregion centro y selva, el primer pico es más alto que el segundo. Y, en el caso, 
+##    de la macroregion sur se da al revés.
 ##  - El primer pico de decenso se da en el mes de octubre de 2020, luego el media de casos aumenta y
 ##    finalmente decrece a partir del mes de marzo de 2021.
-## 
-## En cuanto al primer grafico, la principal diferencia se genera por el agrupamiento de los 
-## departamentos por macroregion; pues, el segundo pico decrece porque Apurimac,
-## que tuvo un mayor n?mero de casos en febrero de 2021 y Tacna que tuvo un pico de descenso
-## en esa fecha, forman parte de una misma macroregion. 
+##  No existe mayor diferencia entre el primer gráfico y el presente, salvo que la agrupación se da por macroregiones.
 
 # PREGUNTA 2 ----
 
