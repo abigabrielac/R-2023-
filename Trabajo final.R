@@ -3,7 +3,7 @@ library(tidyverse)
 library(readxl)
 
 # Seteamos el directorio asociado a nuestro repositorio de GitHub clonado a nuestra PC
-setwd("D:/1. Documentos/1. Estudios/7. Diplomado PUCP Data Science/04. Fundamentos de R/R-2023-Diplomado/BD")
+setwd("C:/Users/User/Documents/GitHub/R-2023-Diplomado/BD")
 
 # Nos descargamos la base de datos del Github. 
 # Esta base de datos recoge la informaci??n registrada por todas las entidades 
@@ -76,3 +76,17 @@ bd_final |>
   group_by(ENTIDAD.x , TIPOORDEN) |> 
   summarise(media = mean(MONTO_TOTAL_ORDEN_ORIGINAL)) |> 
   arrange(desc(media))
+
+
+
+### 4. Concentración proveedores ----
+bd_conc_s <-  bd_final |> 
+  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Servicio" )  |> 
+  group_by(ENTIDAD.x) |>
+  mutate(n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = 1 - ratio_conc) |> 
+  arrange(ENTIDAD.x)
+
+
+  
+
+
