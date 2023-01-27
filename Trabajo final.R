@@ -1,6 +1,11 @@
 ### 1. Descarga y limpieza de la data ----
+#install.packages("mapsPERU")
+#install.packages("sf")
 library(tidyverse)
 library(readxl)
+library(mapsPERU)
+library(dplyr)
+library(sf)
 
 # Seteamos el directorio asociado a nuestro repositorio de GitHub clonado a nuestra PC
 setwd("C:/Users/User/Documents/GitHub/R-2023-Diplomado/BD")
@@ -80,11 +85,16 @@ bd_final |>
 
 
 ### 4. Concentración proveedores ----
+
+# Se define bse de concentración de proveedores
 bd_conc_s <-  bd_final |> 
   filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
   mutate(n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = 1 - ratio_conc) |> 
   arrange(ENTIDAD.x)
+
+#Se visualiza en mapa
+mapa <- map_DIST
 
 
   
