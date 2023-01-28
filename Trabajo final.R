@@ -90,18 +90,56 @@ bd_final |>
 bd_conc_s <-  bd_final |> 
   filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
-  mutate(momto_trim = sum(MONTO_TOTAL_ORDEN_ORIGINAL),  n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = 1 - ratio_conc) |> 
+  mutate(momto_trim = sum(MONTO_TOTAL_ORDEN_ORIGINAL),  n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = (1 - ratio_conc)) |> 
   filter(!duplicated(UBIGEO)) |> 
-  select(1,16,20,21:28) |> 
+  select(1,16,20,21:29) |> 
   arrange(ENTIDAD.x)
 
+bd_conc_c <-  bd_final |> 
+  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Compra" )  |> 
+  group_by(ENTIDAD.x) |>
+  mutate(momto_trim = sum(MONTO_TOTAL_ORDEN_ORIGINAL),  n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = (1 - ratio_conc)) |> 
+  filter(!duplicated(UBIGEO)) |> 
+  select(1,16,20,21:29) |> 
+  arrange(ENTIDAD.x)
 
 #Se visualiza en mapa
 mapa_lim <- map_DIST |> 
   filter(DEPARTAMENTO == "Lima" & PROVINCIA == "Lima") |> 
   rename(UBIGEO = COD_DISTRITO)
 
-mapa_conc_s <- left_join(bd_conc_s, mapa_lim, by="UBIGEO") 
+mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |> 
+  arrange(desc(ratio_conc)) |> 
+  mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"1 a 2 proveedores por cada 5 contratos",
+                            ratio_conc>0.4 & ratio_conc<=0.6~"2 a 3 proveedores por cada 5 contratos",
+                            ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
+                            ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
+                            TRUE ~ "Sin información") )
+
+mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |> 
+  arrange(desc(ratio_conc)) |> 
+  mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"1 a 2 proveedores por cada 5 contratos",
+                            ratio_conc>0.4 & ratio_conc<=0.6~"2 a 3 proveedores por cada 5 contratos",
+                            ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
+                            ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
+                            TRUE ~ "Sin información") )
 
 
 
+#factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 proveedores por cada 5 contratos", "3 a 4 proveedores por cada 5 contratos"," 5 proveedores por cada 5 contratos" ))
+colores <- c('#810f7c','#8856a7','#8c96c6','#b3cde3', "white")
+
+#Servicios
+mapa_conc_s |> 
+  ggplot() +
+  aes(geometry=geometry) +
+  scale_fill_manual(values=colores)+
+  geom_sf(aes(fill=cat_conc))
+
+#Compras
+
+mapa_conc_c |> 
+  ggplot() +
+  aes(geometry=geometry) +
+  scale_fill_manual(values=colores)+
+  geom_sf(aes(fill=cat_conc))
