@@ -52,7 +52,7 @@ lista_munis <- read_xlsx("lista_munis.xlsx")
 bd_final <- bd_lima |> 
   left_join(lista_munis, by= "RUC_ENTIDAD") |> 
   filter(LIMA_MET =="Si") |> 
-  subset(select = -c(19, 20)) |> 
+  subset(select = -c(19)) |> 
   mutate(anio_emision = substr(FECHA_DE_EMISION, 1, 4), mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")))
 
 ### 2. Descriptivos generales ----
@@ -90,13 +90,18 @@ bd_final |>
 bd_conc_s <-  bd_final |> 
   filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
-  mutate(n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = 1 - ratio_conc) |> 
+  mutate(momto_trim = sum(MONTO_TOTAL_ORDEN_ORIGINAL),  n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = 1 - ratio_conc) |> 
+  filter(!duplicated(UBIGEO)) |> 
+  select(1,16,20,21:28) |> 
   arrange(ENTIDAD.x)
 
+
 #Se visualiza en mapa
-mapa <- map_DIST
+mapa_lim <- map_DIST |> 
+  filter(DEPARTAMENTO == "Lima" & PROVINCIA == "Lima") |> 
+  rename(UBIGEO = COD_DISTRITO)
 
+mapa_conc_s <- left_join(bd_conc_s, mapa_lim, by="UBIGEO") 
 
-  
 
 
