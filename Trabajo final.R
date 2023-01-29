@@ -118,28 +118,34 @@ mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |>
 
 mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
-  mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"1 a 2 proveedores por cada 5 contratos",
-                            ratio_conc>0.4 & ratio_conc<=0.6~"2 a 3 proveedores por cada 5 contratos",
-                            ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
-                            ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
-                            TRUE ~ "Sin información") )
+  mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"De 1 a 2 por cada 5 contratos",
+                            ratio_conc>0.4 & ratio_conc<=0.6~"De 2 a 3 por cada 5 contratos",
+                            ratio_conc>0.6 & ratio_conc<=0.8~"De 3 a 4 por cada 5 contratos",
+                            ratio_conc>0.8~ "De 5 por cada 5 contratos",
+                            TRUE ~ "Sin información"  ) )
 
 
 
 #factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 proveedores por cada 5 contratos", "3 a 4 proveedores por cada 5 contratos"," 5 proveedores por cada 5 contratos" ))
-colores <- c('#810f7c','#8856a7','#8c96c6','#b3cde3', "white")
+colores_s <- c("#034e7b", "#3690c0","#74a9cf", "#d0d1e6", "white")
+colores_c <- c("#cc4c02", "#fe9929","#fed98e", "#ffffd4", "white")
 
 #Servicios
 mapa_conc_s |> 
   ggplot() +
   aes(geometry=geometry) +
-  scale_fill_manual(values=colores)+
-  geom_sf(aes(fill=cat_conc))
+  scale_fill_manual(values=colores_s)+
+  geom_sf(aes(fill=cat_conc)) +
+  labs(title = "Imagen 5. Concentración de proveedores por órdenes de servicio")+
+  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))
 
 #Compras
 
-mapa_conc_c |> 
+mapa_conc_c |>
   ggplot() +
   aes(geometry=geometry) +
-  scale_fill_manual(values=colores)+
-  geom_sf(aes(fill=cat_conc))
+  scale_fill_manual(values=colores_c)+
+  #scale_fill_brewer(palette = "RdGy", na.value = "white")+
+  geom_sf(aes(fill=cat_conc))+
+  labs(title = "Imagen 6. Concentración de proveedores por órdenes de compra")+
+  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))
