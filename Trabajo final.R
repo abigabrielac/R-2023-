@@ -126,7 +126,7 @@ OS #Visualizacion de datos para OS
 ###1.2. Cantidad de Ordenes de Compra, por distrito----
 db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 #la que contiene la informacion de los distritos y la que posee la informacion 
-#sobre las ordenes de servicio y la cantidad por distrito.
+#sobre las ordenes de compra y la cantidad por distrito.
 
 OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
