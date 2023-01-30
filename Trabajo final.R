@@ -41,16 +41,16 @@ bd_lima <- bd_lima |>
 
 # Ahora generamos una base de datos alternativa para quedarnos solo con los RUC 
 # y nombres de entidades que son de Lima Metropolitana
-# bd_munis <- bd_lima |> 
-#  subset(select = c(ENTIDAD, RUC_ENTIDAD)) |> 
-#  filter(!duplicated(RUC_ENTIDAD)) |> 
-#  filter(substr(ENTIDAD, 1, 13) == "MUNICIPALIDAD")
+bd_munis <- bd_lima |> 
+subset(select = c(ENTIDAD, RUC_ENTIDAD)) |> 
+filter(!duplicated(RUC_ENTIDAD)) |> 
+filter(substr(ENTIDAD, 1, 13) == "MUNICIPALIDAD")
 
 lista_munis <- read_xlsx("lista_munis.xlsx")
 
 # Extraemos la informaci??n de las fechas de emisi??n de las ordenes de compra/servicio
-bd_final <- bd_lima |> 
-  left_join(lista_munis, by= "RUC_ENTIDAD") |> 
+bd_final <- lima_db |> 
+  left_join(mun_list, by= "RUC_ENTIDAD") |> 
   filter(LIMA_MET =="Si") |> 
   subset(select = -c(19)) |> 
   mutate(anio_emision = substr(FECHA_DE_EMISION, 1, 4), mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")))
@@ -95,30 +95,28 @@ bd_final <- bd_final %>%
 
 ### 1. Cantidad de ordenes por distrito, segun tipo ----
 
-map_1 <- bd_final |> count(ENTIDAD.x, TIPOORDEN) #creamos un nuevo df (Municipalidad, tipo de orden, Cantidad)
+map_1 <- bd_final |> count(UBIGEO, TIPOORDEN)#Para facilitar el manejo de data, filtramos por "Ubigeo"
 
-map_1["ENTIDAD.x"] <- map_1["ENTIDAD.x"] |>
-  mutate(ENTIDAD.x = gsub("MUNICIPALIDAD DISTRITAL DE ", "", ENTIDAD.x)) |>
-  mutate(ENTIDAD.x = gsub("MUNICIPALIDAD METROPOLITANA DE ", "", ENTIDAD.x)) |>
-  mutate(ENTIDAD.x = gsub(pattern = "\\((.*?)\\)", "", ENTIDAD.x)) |>
-  mutate(ENTIDAD.x = gsub("- LIMA", "", ENTIDAD.x)) 
-#Para el merge con la base de datos sobre distritos de Lima, uniformizamos la informacion. 
-#Por ese motivo, nos quedamos solo con el nombre de los distritos quitando las palabras que les anteceden.
+colnames(map_1) <- c("UBIGEO", "Tipoorden", "Cantidad")# Renombramos variables
 
+map_lima <- map_DIST #Cargamos la base de datos sobre los distritos del Peru
 
-colnames(DF_MAPA) <- c("DISTRITO", "Tipoorden", "Cantidad") #renombramos las variables del DF para el merge por DISTRITO
+colnames(map_lima) [4] <- "UBIGEO"  #renombramos la variable del DF para el merge por UBIGEO
 
-map_lima <- dplyr::filter(map_DIST, REGION == "Lima Metropolitana") #de la base de datos por distrito, 
-#filtramos la provincia de Lima Metropolitana
+map_lima <- dplyr::filter(map_DIST, REGION == "Lima Metropolitana") #filtramos la provincia de Lima Metropolitana,
+#de la base de datos por distrito, 
 
-map_lima$DISTRITO <- toupper(map_lima$DISTRITO) #Ponemos en altas los valores de la variable distrito para el merge
-
-db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "DISTRITO", all.x = TRUE)
-#Juntamos las bases de datos: la que contiene la informacion de los distritos y la que posee la informacion
-#sobre tipos de ordenes y la cantidad por distrito.
+#creamos los dataframes para combinarlos con el dataframe que contiene la informacion sobre los distritos
+df_map_os <- filter(map_1, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
+df_map_oc <- filter(map_1, Tipoorden == "Orden de Compra")#cantidad de ordenes de compras por ubigeo
 
 ###1.1. Cantidad de Ordenes de Servicio, por distrito ----
-OS = ggplot(db_lima_OS, aes(geometry = geometry)) +
+db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
+#la que contiene la informacion de los distritos y la que posee la informacion 
+#sobre las ordenes de servicio y la cantidad por distrito.
+
+
+OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
   ggtitle("Imagen 1. Cantidad de Órdenes de Servicio IV Trim")+
   labs(x = "", y = "")+
@@ -126,9 +124,11 @@ OS = ggplot(db_lima_OS, aes(geometry = geometry)) +
 OS #Visualizacion de datos para OS
 
 ###1.2. Cantidad de Ordenes de Compra, por distrito----
-db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "DISTRITO", all.x = TRUE)
+db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
+#la que contiene la informacion de los distritos y la que posee la informacion 
+#sobre las ordenes de servicio y la cantidad por distrito.
 
-OC=ggplot(db_lima_OC, aes(geometry = geometry)) +
+OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
   ggtitle("Imagen 2. Cantidad de Órdenes de Compra IV Trim")+
   labs(x = "", y = "")+
