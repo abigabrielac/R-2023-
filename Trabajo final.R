@@ -28,16 +28,19 @@ bd_oct <- read_xlsx("CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx")
 #bd_ene <- read_xlsx("CONOSCE_ORDENESCOMPRAENERO2022_0.xlsx")
 
 #bd_lima <- rbind(bd_dic,bd_nov, bd_oct , bd_sep, bd_ago, bd_jul, bd_jun, bd_may, bd_abr, bd_mar, bd_feb, bd_ene)
-bd_lima <- rbind(bd_dic,bd_nov, bd_oct)
-
 
 # Debido a que en nuestro tema de trabajo nos interesa conocer ??nicamente la 
 # informaci??n asociada al departamento de Lima y para compras menores a 9 UIT, 
 # por lo que realizamos un filtro:
-bd_lima <- bd_lima |> 
-  filter(DEPARTAMENTO__ENTIDAD== "LIMA") 
-bd_lima <- bd_lima |> 
-  filter(MONTO_TOTAL_ORDEN_ORIGINAL <= 9*4400) 
+
+bd_lima <- rbind(
+  read_xlsx("CONOSCE_ORDENESCOMPRADICIEMBRE2022_0.xlsx"),
+  read_xlsx("CONOSCE_ORDENESCOMPRANOVIEMBRE2022_0.xlsx"),
+  read_xlsx("CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx")
+) |>
+  filter(DEPARTAMENTO__ENTIDAD == "LIMA") |>
+  filter(MONTO_TOTAL_ORDEN_ORIGINAL <= 9 * 4400)
+
 
 # Ahora generamos una base de datos alternativa para quedarnos solo con los RUC 
 # y nombres de entidades que son de Lima Metropolitana
