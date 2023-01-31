@@ -111,18 +111,18 @@ db_lima_reg_os <- merge(x = map_lima, y = map_reg_os, by = "UBIGEO", all.x = TRU
   mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OS registradas a tiempo",
                                   pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OS registradas a tiempo",
                                   pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OS registradas a tiempo",
-                                  TRUE ~ "Sin informaci??n"))
+                                  TRUE ~ "Sin informaci??n")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
 
 db_lima_reg_oc <- merge(x = map_lima, y = map_reg_oc, by = "UBIGEO", all.x = TRUE) |> #Juntamos las bases de datos: 
   arrange(desc(pct_reg_a_tiempo)) |> 
   mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OC registradas a tiempo",
                                   pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OC registradas a tiempo",
                                   pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OC registradas a tiempo",
-                                  TRUE ~ "Sin informaci??n"))
+                                  TRUE ~ "Sin informaci??n")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
 
 
-colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white")
-colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white")
+colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white") #Definimos manualmente los colores del mapa
+colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white") #Definimos manualmente los colores del mapa
 
 db_lima_reg_os |> 
   ggplot() +
