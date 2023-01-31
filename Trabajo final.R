@@ -2,40 +2,54 @@
 #install.packages("mapsPERU")
 #install.packages("sf")
 library(tidyverse)
-library(readxl)
 library(mapsPERU)
 library(dplyr)
 library(sf)
+library(openxlsx)
 
-# Seteamos el directorio asociado a nuestro repositorio de GitHub clonado a nuestra PC
-setwd("C:/Users/User/Documents/GitHub/R-2023-Diplomado/BD") 
+# Como primer paso del codigo, importamos los archivos xlsx del repositorio de 
+# GitHub del grupo, utilizando la funci??n read.xlsx de la libreria openxlsx
+# Para ello, definimos los links de las tres bases de datos que utilizaremos
+link_dic <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/CONOSCE_ORDENESCOMPRADICIEMBRE2022_0.xlsx"
+link_nov <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/CONOSCE_ORDENESCOMPRANOVIEMBRE2022_0.xlsx"
+link_oct <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx"
 
-
-# Debido a que en nuestro tema de trabajo nos interesa conocer ??nicamente la 
-# informaci??n asociada al departamento de Lima y para compras menores a 9 UIT, 
-# por lo que realizamos un filtro:
-
-bd_osce <- rbind(
-  read_xlsx("CONOSCE_ORDENESCOMPRADICIEMBRE2022_0.xlsx"),
-  read_xlsx("CONOSCE_ORDENESCOMPRANOVIEMBRE2022_0.xlsx"),
-  read_xlsx("CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx")
-) |>
+# A continuaci??n, importamos y juntamos las tres bases de inter??s con la funci??n 
+# read.xlsx y rbind. Asimismo, debido a que en nuestro tema de trabajo nos interesa 
+# conocer unicamente la  informacion asociada al departamento de Lima y para  
+# compras menores a 9 UIT, realizamos un filtro. 
+bd_osce <- rbind(read.xlsx(link_dic),
+                 read.xlsx(link_nov),
+                 read.xlsx(link_oct)) |> 
   filter(DEPARTAMENTO__ENTIDAD == "LIMA") |>
   filter(MONTO_TOTAL_ORDEN_ORIGINAL <= 9 * 4400)
 
+# En la base de datos importada identificamos que contamos con muchas entidades 
+# p??blicas ubicadas en el departamento de Lima. Por lo tanto, como nos interesa
+# quedarnos ??nicamente con las municipalidades de Lima Metropolitana, utilizamos
+# un excel generado por nosotros para la obtenci??n de las 43 municipalidades dis
+# -tritales de Lima Metropolitana. Esto se hizo porque la base de datos no permite 
+# diferencias provincias de Lima (solo permite filtrar por departamento).
 
-mun_list <- read_xlsx("lista_munis.xlsx")#EXPLICAR DE QUE VA LA BASE
+# OJO: si bien esto se podr??a generar en el mismo R, convenimos que era m??s pr??ctico
+# utilizar una base alternativa que contar con un c??digo de R que filtre espec??ficamente
+# las 43 municipalidades (esto ser??a muy largo). Asimismo, esta base recoge los 
+# c??digos ubigeo de los distritos, lo cual nos servir?? m??s adelante para los mapas.
 
-# Combinamos las listas (mun_lis y bd_osce) y creamos nuevas varibles: anio de emision y mes de emision 
-bd_final <- lima_db |> 
+link_munis <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/lista_munis.xlsx"
+mun_list <- read.xlsx(link_munis)
+
+# Finalmente, obtenemos la base de datos final para el trabajo al combinar las 
+# bases del osce para el ??ltimo trimestre de 2022 (bd_osce) con la base de datos
+# de municipalidades (mun_list). Para ello utilizamos la funci??n left_join y filter.
+# Asimismo, generamos las variables anio_emision y mes_emision que nos servir?? 
+# identificar el mes de la emisi??n. Combinamos las listas (mun_lis y bd_osce) y creamos nuevas varibles: anio de emision y mes de emision 
+bd_final <- bd_osce |> 
   left_join(mun_list, by= "RUC_ENTIDAD") |> 
   filter(LIMA_MET =="Si") |> 
   subset(select = -c(19)) |> 
-  mutate(anio_emision = substr(FECHA_DE_EMISION, 1, 4), mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")))
-
-#se filtra en bd_final las ordenes de compra y servico emitidas en lso meses de octubre, noviembre y diciembre
-library(dplyr)
-bd_final<-bd_final %>% filter(mes_emision == 10 | mes_emision == 11 | mes_emision == 12)
+  mutate(fecha_emision = as.numeric(as.Date(FECHA_DE_EMISION), "%Y-%m-%d"), fecha_registro = as.numeric(as.Date(FECHA_REGISTRO), "%Y-%m-%d"), anio_emision = substr(FECHA_DE_EMISION, 1, 4), mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")))  |> 
+  filter(mes_emision == 10 | mes_emision == 11 | mes_emision == 12)
 
 ### Descriptivos generales ----
 
@@ -88,7 +102,7 @@ db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #J
 
 OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 1. Cantidad de Órdenes de Servicio IV Trim")+
+  ggtitle("Imagen 1. Cantidad de ??rdenes de Servicio IV Trim")+
   labs(x = "", y = "")+
   scale_fill_gradient("Cantidad de ordenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")
 OS #Visualizacion de datos para OS
@@ -100,13 +114,13 @@ db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #J
 
 OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 2. Cantidad de Órdenes de Compra IV Trim")+
+  ggtitle("Imagen 2. Cantidad de ??rdenes de Compra IV Trim")+
   labs(x = "", y = "")+
   scale_fill_gradient("Cantidad de ordenes de compra", low = "yellow", high = "red", na.value = "white") 
 OC #Visualizacion de datos para OC
 
 
-### 2. Montos designados por distrito, según tipo ----
+### 2. Montos designados por distrito, seg??n tipo ----
 
 # Calculamos el total de monto desembOlsado por Municipalidad Distrital y por el
 #tipo de orden (compra , servicio)
@@ -311,9 +325,9 @@ ggplot(merged_data_filtered2, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MO
 #seguido por el distrito de Villa Maria del Triunfo y Lima.
 
 
-### 3. Concentración proveedores ----
+### 3. Concentraci??n proveedores ----
 
-# Se define bse de concentración de proveedores
+# Se define bse de concentraci??n de proveedores
 bd_conc_s <-  bd_final |> 
   filter(TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
@@ -337,7 +351,7 @@ mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |>
                             ratio_conc>0.4 & ratio_conc<=0.6~"2 a 3 proveedores por cada 5 contratos",
                             ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
                             ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
-                            TRUE ~ "Sin información") )
+                            TRUE ~ "Sin informaci??n") )
 #PLOT OC
 
 mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |> 
@@ -346,7 +360,7 @@ mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |>
                             ratio_conc>0.4 & ratio_conc<=0.6~"De 2 a 3 por cada 5 contratos",
                             ratio_conc>0.6 & ratio_conc<=0.8~"De 3 a 4 por cada 5 contratos",
                             ratio_conc>0.8~ "De 5 por cada 5 contratos",
-                            TRUE ~ "Sin información"  ) )
+                            TRUE ~ "Sin informaci??n"  ) )
 
 
 #factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 
@@ -361,8 +375,8 @@ mapa_conc_s |>
   aes(geometry=geometry) +
   scale_fill_manual(values=colores_s)+
   geom_sf(aes(fill=cat_conc)) +
-  labs(title = "Imagen 5. Concentración de proveedores por órdenes de servicio")+
-  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))
+  labs(title = "Imagen 5. Concentraci??n de proveedores por ??rdenes de servicio")+
+  guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
 
 ###3.2.Concentracion de proveedores por Ordenes de Compras----
 
@@ -372,5 +386,5 @@ mapa_conc_c |>
   scale_fill_manual(values=colores_c)+
   #scale_fill_brewer(palette = "RdGy", na.value = "white")+
   geom_sf(aes(fill=cat_conc))+
-  labs(title = "Imagen 6. Concentración de proveedores por órdenes de compra")+
-  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))
+  labs(title = "Imagen 6. Concentraci??n de proveedores por ??rdenes de compra")+
+  guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
