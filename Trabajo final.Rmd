@@ -1,0 +1,154 @@
+---
+title: "Trabajo final - Grupo 4"
+author: "Calvo, Gabriela; Ibáñez Ángel; Núñez, César; Orellana, Cristian"
+date: "2023-01-31"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+#bibliography: mybibfile.bib
+---
+
+# 1. Introducción
+
+
+
+# 2. Antecedentes
+
+
+
+# 3. Metodología
+
+
+
+# 4. Resultados y discusión
+
+```{r include=FALSE}
+#install.packages("mapsPERU")
+#install.packages("sf")
+library(tidyverse)
+library(mapsPERU)
+library(dplyr)
+library(sf)
+library(openxlsx)
+
+# Como primer paso del codigo, importamos los archivos xlsx del repositorio de 
+# GitHub del grupo, utilizando la funci??n read.xlsx de la libreria openxlsx
+# Para ello, definimos los links de las tres bases de datos que utilizaremos
+link_dic <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/CONOSCE_ORDENESCOMPRADICIEMBRE2022_0.xlsx"
+link_nov <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/CONOSCE_ORDENESCOMPRANOVIEMBRE2022_0.xlsx"
+link_oct <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx"
+
+# A continuaci??n, importamos y juntamos las tres bases de inter??s con la funci??n 
+# read.xlsx y rbind. Asimismo, debido a que en nuestro tema de trabajo nos interesa 
+# conocer unicamente la  informacion asociada al departamento de Lima y para  
+# compras menores a 9 UIT, realizamos un filtro. 
+bd_osce <- rbind(read.xlsx(link_dic),
+                 read.xlsx(link_nov),
+                 read.xlsx(link_oct)) |> 
+  filter(DEPARTAMENTO__ENTIDAD == "LIMA") |>
+  filter(MONTO_TOTAL_ORDEN_ORIGINAL <= 9 * 4400)
+
+# En la base de datos importada identificamos que contamos con muchas entidades 
+# p??blicas ubicadas en el departamento de Lima. Por lo tanto, como nos interesa
+# quedarnos ??nicamente con las municipalidades de Lima Metropolitana, utilizamos
+# un excel generado por nosotros para la obtenci??n de las 43 municipalidades dis
+# -tritales de Lima Metropolitana. Esto se hizo porque la base de datos no permite 
+# diferencias provincias de Lima (solo permite filtrar por departamento).
+
+# OJO: si bien esto se podr??a generar en el mismo R, convenimos que era m??s pr??ctico
+# utilizar una base alternativa que contar con un c??digo de R que filtre espec??ficamente
+# las 43 municipalidades (esto ser??a muy largo). Asimismo, esta base recoge los 
+# c??digos ubigeo de los distritos, lo cual nos servir?? m??s adelante para los mapas.
+
+link_munis <- "https://github.com/abigabrielac/R-2023-Diplomado/raw/main/BD/lista_munis.xlsx"
+mun_list <- read.xlsx(link_munis)
+
+# Finalmente, obtenemos la base de datos final para el trabajo al combinar las 
+# bases del osce para el ??ltimo trimestre de 2022 (bd_osce) con la base de datos
+# de municipalidades (mun_list). Para ello utilizamos la funci??n left_join y filter.
+# Asimismo, generamos las variables anio_emision y mes_emision que nos serviran  
+# para identificar el mes de la emision de las ordenes de compra y servicios. 
+# Debido a que nos interesa en particular el ultimo trimestre del año, nos quedamos
+# con las ordenes emitidas en octubre, noviembre y diciembre. 
+bd_final <- bd_osce |> 
+  left_join(mun_list, by= "RUC_ENTIDAD") |> 
+  filter(LIMA_MET =="Si") |> 
+  subset(select = -c(19)) |> 
+  mutate(fecha_emision = as.numeric(as.Date(FECHA_DE_EMISION), "%Y-%m-%d"),
+         fecha_registro = as.numeric(as.Date(FECHA_REGISTRO), "%Y-%m-%d"),
+         anio_emision = substr(FECHA_DE_EMISION, 1, 4),
+         mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")),
+         mes_registro = as.numeric(strftime(as.Date(FECHA_REGISTRO), "%m")),
+         dia_registro = as.numeric(strftime(as.Date(FECHA_REGISTRO), "%d")))  |> 
+  filter(anio_emision == 2022 & (mes_emision == 10 | mes_emision == 11 | mes_emision == 12))
+```
+
+## 4.1. Registro oportuno de las órdenes de compra y servicio
+Un primer foco de nuestra atencion reside en el registro oportuno de las ordenes de servicio. De acuerdo con la Directiva N° 003-2020-OSCE/CD, el registro de las contrataciones en el SEACE de las órdenes de compra y servicio debe realizarse "(...) a partir del día siguiente de emitida la órden respectiva, siendo el plazo máximo de cinco días hábiles del mes siguiente." (OSCE, 2020). Esto quiere decir que una entidad realiza sus compras a tiempo siempre y cuando registre sus órdenes de compra y servicio antes del sexto día hábil del mes siguiente.
+
+Para evaluar el registro
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+bd_registro <- bd_final |> 
+  mutate(reg_a_tiempo = case_when(mes_emision == mes_registro ~ 100 ,
+                                  mes_emision == 10 & dia_registro < 9 ~ 100,
+                                  mes_emision == 11 & dia_registro < 8 ~ 100,
+                                  mes_emision == 12 & dia_registro < 6 ~ 100,
+                                  TRUE ~ 0)) |> 
+  group_by(UBIGEO, ENTIDAD.x, TIPOORDEN ) |> 
+  summarise(pct_reg_a_tiempo = mean(reg_a_tiempo)) 
+
+map_lima <- map_DIST |> #Cargamos la base de datos sobre los distritos del Peru
+  dplyr::filter(REGION == "Lima Metropolitana") |> #filtramos la provincia de Lima Metropolitana,
+  rename(UBIGEO = COD_DISTRITO ) #renombramos la variable del DF para el merge por UBIGEO
+ 
+
+map_reg_os <- bd_registro |> 
+  filter(TIPOORDEN == "Orden de Servicio")  #cantidad de ordenes de servicio por ubigeo
+
+map_reg_oc <- bd_registro |> 
+  filter(TIPOORDEN == "Orden de Compra") #cantidad de ordenes de compras por ubigeo
+
+
+db_lima_reg_os <- merge(x = map_lima, y = map_reg_os, by = "UBIGEO", all.x = TRUE) |>  #Juntamos las bases de datos: 
+  arrange(desc(pct_reg_a_tiempo)) |> 
+  mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OS registradas a tiempo",
+                                  pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OS registradas a tiempo",
+                                  pct_reg_a_tiempo>=66 ~"3. Más del 66% de las OS registradas a tiempo",
+                                  TRUE ~ "Sin información"))
+  
+db_lima_reg_oc <- merge(x = map_lima, y = map_reg_oc, by = "UBIGEO", all.x = TRUE) |> #Juntamos las bases de datos: 
+  arrange(desc(pct_reg_a_tiempo)) |> 
+  mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OC registradas a tiempo",
+                                  pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OC registradas a tiempo",
+                                  pct_reg_a_tiempo>=66 ~"3. Más del 66% de las OC registradas a tiempo",
+                                  TRUE ~ "Sin información"))
+
+
+colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white")
+colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white")
+
+db_lima_reg_os |> 
+  ggplot() +
+  aes(geometry=geometry) +
+  scale_fill_manual(values=colores_s)+
+  geom_sf(aes(fill=cat_registro)) +
+  labs(title = "Imagen 1. Porcentaje de ordenes de servicio registradas a tiempo")+
+  guides(fill=guide_legend(title="Porcentaje de órdenes de servicio registradas a tiempo"))+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+
+db_lima_reg_oc |> 
+  ggplot() +
+  aes(geometry=geometry) +
+  scale_fill_manual(values=colores_c)+
+  geom_sf(aes(fill=cat_registro)) +
+  labs(title = "Imagen 2. Porcentaje de ordenes de compra registradas a tiempo")+
+  guides(fill=guide_legend(title="Porcentaje de órdenes de compra registradas a tiempo"))+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+```
+
+
+# 5. Conclusiones
+
+
+
+# 6. Bibliografía
