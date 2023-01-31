@@ -111,18 +111,18 @@ db_lima_reg_os <- merge(x = map_lima, y = map_reg_os, by = "UBIGEO", all.x = TRU
   mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OS registradas a tiempo",
                                   pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OS registradas a tiempo",
                                   pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OS registradas a tiempo",
-                                  TRUE ~ "Sin informaci??n"))
+                                  TRUE ~ "Sin informaci??n")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
 
 db_lima_reg_oc <- merge(x = map_lima, y = map_reg_oc, by = "UBIGEO", all.x = TRUE) |> #Juntamos las bases de datos: 
   arrange(desc(pct_reg_a_tiempo)) |> 
   mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OC registradas a tiempo",
                                   pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OC registradas a tiempo",
                                   pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OC registradas a tiempo",
-                                  TRUE ~ "Sin informaci??n"))
+                                  TRUE ~ "Sin informaci??n")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
 
 
-colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white")
-colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white")
+colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white") #Definimos manualmente los colores del mapa
+colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white") #Definimos manualmente los colores del mapa
 
 db_lima_reg_os |> 
   ggplot() +
@@ -178,210 +178,136 @@ OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
 OC #Visualizacion de datos para OC
 
 
-####  2. Montos designados por distrito, seg??n tipo ----
+####  2. Montos designados por distrito, segun tipo de orden  ----
 
-# Calculamos el total de monto desembOlsado por Municipalidad Distrital y por el
-#tipo de orden (compra , servicio)
+# Para iniciar el analisis, se calcula los montos totales por distrito y por tipo de orden.
+# para obtener este reporte se agrupa la base de datos por UBIGEO y tipo de oden.
+#luego se suman los montos correspondients.
 
-bd_final_summary <- bd_final %>%
-  group_by(NOMBdist, TIPOORDEN) %>%
+
+monto_oyc <- bd_final %>%
+  group_by(UBIGEO, TIPOORDEN) %>%
   summarize(MONTO_TOTAL_ORDEN_ORIGINAL = sum(MONTO_TOTAL_ORDEN_ORIGINAL))
 
-# Oredenamos por montos totales desembolsados
-bd_final_summary <- bd_final_summary %>%
-  arrange(desc(MONTO_TOTAL_ORDEN_ORIGINAL))
+colnames(monto_oyc) <- c("UBIGEO", "Tipoorden", "Monto_Total") #renombrar las columnas obtenidas, para una mejor
+#de los datos
 
-#####################################################################################
-#Borramos en la base de datos resumen "- LIMA" y consideeramos a la Municipalidad
-#metropolitana de Lima como  Lima.
+#Como reultado del dataframe otenido anteriormente, filtramos y obtenemos dos
+#dataframe dividos por el tipo de orden.
 
-bd_final_summary$NOMBdist <- gsub("MUNICIPALIDAD METROPOLITANA DE ","",bd_final_summary$NOMBdist)
-bd_final_summary$NOMBdist <- sub(" - LIMA","",bd_final_summary$NOMBdist)
-bd_final_summary$NOMBdist <- gsub("\\(|\\)","",bd_final_summary$NOMBdist)
-bd_final_summary$NOMBdist <- gsub("CHOSICA","",bd_final_summary$NOMBdist)
-bd_final_summary$NOMBdist <- gsub("LAS PALMERAS","",bd_final_summary$NOMBdist)
-####################################################################################
+df_monto_os <- filter(monto_oyc, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
+df_monto_oc <- filter(monto_oyc, Tipoorden == "Orden de Compra")#cantidad de ordenes de compras por ubigeo
 
-#Sacamos un resumen solo de las ordenes de servico.
-bd_final_summary_servicio <- bd_final_summary %>%
-  filter(TIPOORDEN == "Orden de Servicio")
+##### 2.1. Montos totales de Ordenes de Servicio, por distrito ----
 
-#Sacamos un resumen soo de las ordenes de compra
-bd_final_summary_compra <- bd_final_summary %>%
-  filter(TIPOORDEN == "Orden de Compra") 
+db_lima_monto_OS <- merge(x = map_lima, y = df_monto_os, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 
-#cambiamos de nombre la columna NOMBdist por NOMBDIST, para homogenizar
-colnames(bd_final_summary_servicio)[colnames(bd_final_summary_servicio)=="NOMBdist"] <- "NOMBDIST"
+#la que contiene la informacion de los distritos y la que posee la informacion 
+#sobre las ordenes de servicio y los montos totales por distrito.
 
-colnames(bd_final_summary_compra)[colnames(bd_final_summary_compra)=="NOMBdist"] <- "NOMBDIST"
+#Se dibuja el mapa corresondiente, con el gradiente de colores que diferencia 
+#el monto total gastado en cada distrito de Lima Metropolitana.
 
-######################################################################################
-#Se descarga y abren los paquetes que se requieren para dibujar los mapas
-
-install.packages("pacman")
-library(pacman)
-p_load("sf","purrr","ggplot2","ggrepel","tidyverse","readxl")
+monto_OS = ggplot(db_lima_monto_OS, aes(geometry = geometry)) + 
+  geom_sf(aes(fill = Monto_Total)) +
+  ggtitle("Imagen 5. Montos totales de Servicio IV Trim") +
+  labs(x = "", y = "") +
+  scale_fill_gradient("MONTO TOTAL", labels = function(x) format(x, scientific = FALSE, big.mark = "."),
+                      low = "#FCFFDD", high = "#26185F", na.value = "white") +
+  theme(axis.text.x=element_blank(), axis.text.y=element_blank(), 
+        axis.ticks=element_blank(), panel.background = element_blank(), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+monto_OS
 
 
-#Se accede a los archivos que se usar?n para graficar los mapas
+#Gr?fico de barras
+#Para evitar que se grafiquen los distritos sin informacion, borramos los distritos que no 
+#presentan informai?n para el periodo en an?lisis.
 
-dirmapas <- "C:/Users/crist/Documents/GitHub/R-2023-Diplomado/BD" #La direcci?n de tu directorio de trabajo
-setwd(dirmapas)
-peru_d <- st_read("LIMITE_DISTRITAL_2020_INEI_geogpsperu_juansuyo_931381206.shp") #Este comando permite leer el shapefile y 'transformarlo' en un data frame
-peru_d
-
-#Probamos si funciona la base de datos de los mapas
-ggplot(data = peru_d) +
-  geom_sf()
-
-#filtramos la base de datos peru_d en solo la provincia de Lima
-peru_d_lima<-peru_d %>% filter(NOMBPROV == "LIMA")
-
-#Borramos los espacios en los nombres de distritos para poder realizar los
-#emparejamientos
-peru_d_lima$NOMBDIST <- trimws(peru_d_lima$NOMBDIST)
-bd_final_summary_servicio$NOMBDIST <- trimws(bd_final_summary_servicio$NOMBDIST)
+db_lima_monto_OS_clean <- na.omit(db_lima_monto_OS)
 
 
-#creamos las columas de coordenadas en una data frame
-data_servicio <- merge(peru_d_lima, bd_final_summary_servicio, by.x = "NOMBDIST", by.y = "NOMBDIST", 
-                       suffixes = c("_x","_y"), 
-                       all.x = TRUE, 
-                       sort = TRUE, 
-                       nomatch = NULL)
-##################################################################################################
+library(stringr)
 
-#simpificamos el nombre de la columa MONTO
-colnames(data_servicio)[colnames(data_servicio)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"
+db_lima_monto_OS_clean$DISTRITO <- str_wrap(db_lima_monto_OS_clean$DISTRITO, width = 30)
 
+# utilizamos la funci?n str_wrap de la librer?a stringr para limitar la longitud 
+#de cada nombre de distrito a un n?mero espec?fico de caracteres (30), lo que asegurar? que los 
+#nombres de los distritos no se corten en varias l?neas
 
-bd_final_summary_compra$NOMBDIST <- trimws(bd_final_summary_compra$NOMBDIST)
+monto_OS_barras = ggplot(db_lima_monto_OS_clean, aes(x=Monto_Total/1000, y= reorder(DISTRITO,Monto_Total),fill= Monto_Total)) + 
+  
+  geom_bar(stat = "identity",width = 0.6) + # agrupaci?n por distrito
+  ggtitle("Imagen 6. Montos totales de Servicio IV Trim") +
+  labs(x = "Monto Total en miles de soles", y = "Distrito") +
+  scale_fill_gradient("MONTO TOTAL", labels = function(x) format(x, scientific = FALSE, big.mark = "."),
+                      low = "#FCFFDD", high = "#26185F", na.value = "white") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_rect(fill = "white"))
 
-data_compra <- merge(peru_d_lima, bd_final_summary_compra, by.x = "NOMBDIST", by.y = "NOMBDIST", 
-                     suffixes = c("_x","_y"), 
-                     all.x = TRUE, 
-                     sort = TRUE, 
-                     nomatch = NULL)#####TOMAR EN CUENTA QUE SE HACE REFERENCIA AL MAPA DE SHP
+monto_OS_barras
 
-##################################################################################################################
-##### 2.1. Mapa distrital por monto total de ordenes de servicio----
+#Como se observa en las imagenes 5 y 6, el distrito con mayor monto total por ordenes de servicio
+#es Lima Metropolitana, lo cual se justifica por u gran envergadura. Asimismo se aprecia los los 
+#cuatro distrisos que lo acompanan son:Lurigancho(Chosica), Miraflores, Comas y San Borja, con 
+#montos que no superan el 50% de lo claculado para el distrito de LIma.
 
-library(dplyr)
+##### 2.2. Montos totales de Ordenes de Compra, por distrito ----
 
+db_lima_monto_OC <- merge(x = map_lima, y = df_monto_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 
-# Agrupar los datos por NOMBDIST
-merged_data_grouped <- data_servicio %>% group_by(NOMBDIST)####### TENER EN CUENTA
+##la que contiene la informacion de los distritos y la que posee la informacion 
+#sobre las ordenes de compra y los montos totales por distrito.
 
-# Calcular la posicion media de la geometria para cada grupo
-merged_data_grouped <- merged_data_grouped %>% summarize(x = mean(st_coordinates(data_servicio[["geometry"]])[,1]),
-                                                         y = mean(st_coordinates(data_servicio[["geometry"]])[,2]),
-                                                         MONTO_TOTAL = mean(MONTO_TOTAL))
-
-merged_data_filtered <- merged_data_grouped %>% filter(MONTO_TOTAL!= 0 & !is.na(MONTO_TOTAL))
-
-#######################################################################################################################
+#Se dibuja el mapa corresondiente, con el gradiente de colores que diferencia 
+#el monto total gastado en cada distrito de Lima Metropolitana.
 
 
-library(dplyr)
-#DISTRITOS QUE GASTARON MAS 
+monto_OC = ggplot(db_lima_monto_OC, aes(geometry = geometry)) + #creamos el mapa
+  geom_sf(aes(fill = Monto_Total)) +
+  ggtitle("Imagen 7. Montos totales de Compra IV Trim") +
+  labs(x = "", y = "") +
+  scale_fill_gradient("MONTO TOTAL", labels = function(x) format(x, scientific = FALSE, big.mark = "."),
+                      low = "yellow", high = "red", na.value = "white") +
+  theme(axis.text.x=element_blank(), axis.text.y=element_blank(), 
+        axis.ticks=element_blank(), panel.background = element_blank(), 
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+monto_OC
 
-#Creamos los rangos, para diferenciar los distritos que gastaron 
-#mas, en el cuatro trimestre del 2022
+#Gr?fico de barras
+#Para evitar que se grafiquen los distritos sin informacion, borramos los distritos que no 
+#presentan informai?n para el periodo en an?lisis.
+db_lima_monto_OC_clean <- na.omit(db_lima_monto_OC)
 
-merged_data_filtered <- merged_data_filtered %>% #el nombre cambiara
-  mutate(fill = cut(MONTO_TOTAL, 
-                    breaks = c(0, 5000000, 10000000, 15000000, Inf), 
-                    labels = c("yellow", "green", "orange", "red")))
-
-data_servicio <- data_servicio %>% 
-  mutate(fill = cut(MONTO_TOTAL, 
-                    breaks = c(0, 5000000, 10000000, 15000000, Inf), 
-                    labels = c("yellow", "green", "orange", "red")))
-
-###############################################################################
-#mapa
-ggplot(data = merged_data_filtered) +
-  geom_sf(data = data_servicio, aes(fill = fill)) +
-  ggtitle("Distritos de Lima - Monto Total - Orden de Servicio (IV Trim 2022)") +
-  scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "transparent", labels = c("Bajo", "Medio","Alto", "Muy alto")) +
-  labs(fill = "Exposici?n")
-
-###############################################################################
+# utilizamos la funci?n str_wrap de la librer?a stringr para limitar la longitud 
+#de cada nombre de distrito a un n?mero espec?fico de caracteres (30), lo que asegurar? que los 
+#nombres de los distritos no se corten en varias l?neas
 
 
-#grafico de barras
-ggplot(merged_data_filtered, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MONTO_TOTAL), fill = fill)) +
-  geom_bar(stat = "identity", width = 0.6) +
-  scale_y_discrete(limits = rev(levels(merged_data_filtered$NOMBDIST))) +
-  ggtitle("Distritos de Lima - Monto Total - Orden de Servicio (IV Trim 2022)") +
-  scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "white", labels = c("Bajo", "Medio","Alto", "Muy alto")) + 
-  labs(x = "Monto en Miles", y = "Distritos", fill = "Exposici?n") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+library(stringr)
+
+db_lima_monto_OC_clean$DISTRITO <- str_wrap(db_lima_monto_OC_clean$DISTRITO, width = 30)
 
 
-#La municipalidad metropolitana de Lima fue la qeu se situo en 
-#el rango muy alto, sobrepasando el monto d elos 15 millones en 
-#monto pagoado en ordenes de servicio.
-#seguido por el distrito de miraflores y Lurigancho(Chosica)
+monto_OC_barras = ggplot(db_lima_monto_OC_clean, aes(x=Monto_Total/1000, y= reorder(DISTRITO,Monto_Total),fill= Monto_Total)) + # creamos el gr?fico de barras
+  
+  geom_bar(stat = "identity",width = 0.6) + # agrupaci?n por distrito
+  ggtitle("Imagen 8. Montos totales de Compra IV Trim") +
+  labs(x = "Monto Total en miles de soles", y = "Distrito") +
+  scale_fill_gradient("MONTO TOTAL", labels = function(x) format(x, scientific = FALSE, big.mark = "."),
+                      low = "yellow", high = "red", na.value = "white") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.background = element_rect(fill = "white"))
 
+monto_OC_barras
 
-##### 2.2. Mapa distrital por monto total de ordenes de compra----
+#Como se observa en las imagenes 7 y 8, el distrito con mayor monto total por ordenes de compra
+#es Villa Maria del Triundo que ha sobrepasado el umbral de 1 500 000 nuvos soles, sequido de cerca
+#por Lima Metropolitana, Luriganco (Chosica), San Juan de Luriganco y San Borja.
 
-library(dplyr)
+sum(db_lima_monto_OS_clean$Monto_Total)
 
-
-###############################################################################
-# Agrupar los datos por NOMBDIST
-merged_data_grouped2 <- data_compra %>% group_by(NOMBDIST)
-
-# Calcular la posici?n media de la geometr?a para cada grupo
-merged_data_grouped2 <- merged_data_grouped2 %>% summarize(x = mean(st_coordinates(data_compra[["geometry"]])[,1]),
-                                                           y = mean(st_coordinates(data_compra[["geometry"]])[,2]),
-                                                           MONTO_TOTAL_ORDEN_ORIGINAL = mean(MONTO_TOTAL_ORDEN_ORIGINAL))
-
-
-#filtramos los distritos sin informaci?n y cambiamos de nombre la columna 
-merged_data_filtered2 <- merged_data_grouped2 %>% filter(MONTO_TOTAL_ORDEN_ORIGINAL != 0 & !is.na(MONTO_TOTAL_ORDEN_ORIGINAL))
-colnames(merged_data_filtered2)[colnames(merged_data_filtered2)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"
-###############################################################################
-
-#se crean los rangos, pero por la difencia en montos, ahora se considera muy 
-#alto los superiores a 1500 0000 soles
-merged_data_filtered2 <- merged_data_filtered2 %>% 
-  mutate(fill = cut(MONTO_TOTAL, 
-                    breaks = c(0, 500000, 1000000, 1500000, Inf), 
-                    labels = c("yellow", "green", "orange", "red")))
-
-
-colnames(data_compra)[colnames(data_compra)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"#TENER EN CUENTA
-
-data_compra <- data_compra %>% 
-  mutate(fill = cut(MONTO_TOTAL, 
-                    breaks = c(0, 500000, 1000000, 1500000, Inf), 
-                    labels = c("yellow", "green", "orange", "red")))
-
-
-#PLOT
-ggplot(data = merged_data_filtered2) +
-  geom_sf(data = data_compra, aes(fill = fill)) +
-  ggtitle("Distritos de Lima - Monto Total - Orden de Compra (IV Trim 2022)") +
-  scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "transparent", labels = c("Bajo", "Medio","Alto", "Muy alto")) +
-  labs(fill = "Exposici?n")
-
-#BARRAS
-ggplot(merged_data_filtered2, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MONTO_TOTAL), fill = fill)) +
-  geom_bar(stat = "identity", width = 0.6) +
-  scale_y_discrete(limits = rev(levels(merged_data_filtered2$NOMBDIST))) +
-  ggtitle("Distritos de Lima - Monto Total - Orden de Compra (IV Trim 2022)") +
-  scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "white", labels = c("Bajo", "Medio","Alto", "Muy alto")) + 
-  labs(x = "Monto en Miles", y = "Distritos", fill = "Exposici?n") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-#La municipalidad de Miraflores fue la que se situo en 
-#el rango muy alto, sobrepasando el monto de los 1500 000 en 
-#monto pagoado en ordenes de compra.
-#seguido por el distrito de Villa Maria del Triunfo y Lima.
-
+sum(db_lima_monto_OC_clean$Monto_Total)
 
 ####  3. Concentraci??n proveedores ----
 
