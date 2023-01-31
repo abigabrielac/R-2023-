@@ -10,30 +10,12 @@ library(sf)
 # Seteamos el directorio asociado a nuestro repositorio de GitHub clonado a nuestra PC
 setwd("C:/Users/User/Documents/GitHub/R-2023-Diplomado/BD") 
 
-# Nos descargamos la base de datos del Github. 
-# Esta base de datos recoge la informaci??n registrada por todas las entidades 
-# p??blicas que han realizado compras directas de bienes y servicios por menores 
-# de 9 UIT durante diciembre de 2022. 
-bd_dic <- read_xlsx("CONOSCE_ORDENESCOMPRADICIEMBRE2022_0.xlsx")
-bd_nov <- read_xlsx("CONOSCE_ORDENESCOMPRANOVIEMBRE2022_0.xlsx")
-bd_oct <- read_xlsx("CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx")
-#bd_sep <- read_xlsx("CONOSCE_ORDENESCOMPRASETIEMBRE2022_0.xlsx")
-#bd_ago <- read_xlsx("CONOSCE_ORDENESCOMPRAAGOSTO2022_0.xlsx")
-#bd_jul <- read_xlsx("CONOSCE_ORDENESCOMPRAJULIO2022_0.xlsx")
-#bd_jun <- read_xlsx("CONOSCE_ORDENESCOMPRAJUNIO2022_0.xlsx")
-#bd_may <- read_xlsx("CONOSCE_ORDENESCOMPRAMAYO2022_0.xlsx")
-#bd_abr <- read_xlsx("CONOSCE_ORDENESCOMPRAABRIL2022_0.xlsx")
-#bd_mar <- read_xlsx("CONOSCE_ORDENESCOMPRAMARZO2022_0.xlsx")
-#bd_feb <- read_xlsx("CONOSCE_ORDENESCOMPRAFEBRERO2022_0.xlsx")
-#bd_ene <- read_xlsx("CONOSCE_ORDENESCOMPRAENERO2022_0.xlsx")
-
-#bd_lima <- rbind(bd_dic,bd_nov, bd_oct , bd_sep, bd_ago, bd_jul, bd_jun, bd_may, bd_abr, bd_mar, bd_feb, bd_ene)
 
 # Debido a que en nuestro tema de trabajo nos interesa conocer ??nicamente la 
 # informaci??n asociada al departamento de Lima y para compras menores a 9 UIT, 
 # por lo que realizamos un filtro:
 
-bd_lima <- rbind(
+bd_osce <- rbind(
   read_xlsx("CONOSCE_ORDENESCOMPRADICIEMBRE2022_0.xlsx"),
   read_xlsx("CONOSCE_ORDENESCOMPRANOVIEMBRE2022_0.xlsx"),
   read_xlsx("CONOSCE_ORDENESCOMPRAOCTUBRE2022_0.xlsx")
@@ -42,72 +24,57 @@ bd_lima <- rbind(
   filter(MONTO_TOTAL_ORDEN_ORIGINAL <= 9 * 4400)
 
 
-# Ahora generamos una base de datos alternativa para quedarnos solo con los RUC 
-# y nombres de entidades que son de Lima Metropolitana
-bd_munis <- bd_lima |> 
-subset(select = c(ENTIDAD, RUC_ENTIDAD)) |> 
-filter(!duplicated(RUC_ENTIDAD)) |> 
-filter(substr(ENTIDAD, 1, 13) == "MUNICIPALIDAD")
+mun_list <- read_xlsx("lista_munis.xlsx")#EXPLICAR DE QUE VA LA BASE
 
-lista_munis <- read_xlsx("lista_munis.xlsx")
-
-# Extraemos la informaci??n de las fechas de emisi??n de las ordenes de compra/servicio
+# Combinamos las listas (mun_lis y bd_osce) y creamos nuevas varibles: anio de emision y mes de emision 
 bd_final <- lima_db |> 
   left_join(mun_list, by= "RUC_ENTIDAD") |> 
   filter(LIMA_MET =="Si") |> 
   subset(select = -c(19)) |> 
   mutate(anio_emision = substr(FECHA_DE_EMISION, 1, 4), mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")))
 
-### Descriptivos generales ----
-# Gr??fico de todo el ultimo trimestre
-bd_final |> 
-  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
-  count(mes_emision , TIPOORDEN) |> 
-  ggplot() + aes(x = mes_emision , y = n) + geom_line() + geom_point() + aes(colour =TIPOORDEN) 
-
-# Gr??fico del 2022 completo
-bd_final |> 
-  filter(anio_emision == "2022") |> 
-  count(mes_emision , TIPOORDEN) |> 
-  ggplot() + aes(x = mes_emision , y = n) + geom_line() + geom_point() + aes(colour =TIPOORDEN) 
-
-# Cuadro de frecuencias por municipalidad en el ??ltimo trimestre
-bd_final |> 
-  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
-  group_by(ENTIDAD.x, TIPOORDEN) |> 
-  summarise(n = n()) |> 
-  arrange(desc(n))
-
-# Cuadro de montos promedio de por municipalidad en el ??ltimo trimestre
-bd_final |> 
-  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
-  group_by(ENTIDAD.x , TIPOORDEN) |> 
-  summarise(media = mean(MONTO_TOTAL_ORDEN_ORIGINAL)) |> 
-  arrange(desc(media))
-### Mapas distritales ----
-
 #se filtra en bd_final las ordenes de compra y servico emitidas en lso meses de octubre, noviembre y diciembre
 library(dplyr)
 bd_final<-bd_final %>% filter(mes_emision == 10 | mes_emision == 11 | mes_emision == 12)
 
-#Se crea una columna solo con el nombre de los distritos, paa lo cual limpiamos 
-#la inscripci?jn "MUNICIPALIDAD DISTRITAL DE"
-library(dplyr)
-bd_final <- bd_final %>%
-  mutate(NOMBdist = sub("MUNICIPALIDAD DISTRITAL DE", "", ENTIDAD.x))
+### Descriptivos generales ----
+
+##cuantos de los que registraron en octubre son de octubre y los de registros pasados (lo mismo para nov y dic)
+##filtrado por fecha 
+
+# Grafico de la evolucion de la os y oc, por mes.(oct, nov, dic)
+bd_final |> 
+  #filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
+  count(mes_emision , TIPOORDEN) |> 
+  ggplot() + aes(x = mes_emision , y = n) + geom_line() + geom_point() + aes(colour =TIPOORDEN) 
+
+# Cuadro de frecuencias de os y oc por municipalidad en el ultimo trimestre
+bd_final |> 
+  #filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
+  group_by(ENTIDAD.x, TIPOORDEN) |> 
+  summarise(n = n()) |> 
+  arrange(desc(n))
+
+# Cuadro de montos promedio de por municipalidad en el ultimo trimestre
+bd_final |> 
+  #filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
+  group_by(ENTIDAD.x , TIPOORDEN) |> 
+  summarise(media = mean(MONTO_TOTAL_ORDEN_ORIGINAL)) |> 
+  arrange(desc(media))
+
+### Mapas distritales ---- (mapsPERU): borrar coordenadas y el fondo plomo 
+
+map_lima <- map_DIST #Cargamos la base de datos sobre los distritos del Peru
+colnames(map_lima) [4] <- "UBIGEO"  #renombramos la variable del DF para el merge por UBIGEO
+map_lima <- dplyr::filter(map_DIST, REGION == "Lima Metropolitana") #filtramos la provincia de Lima Metropolitana,
+#de la base de datos por distrito, 
+
 
 ### 1. Cantidad de ordenes por distrito, segun tipo ----
 
 map_1 <- bd_final |> count(UBIGEO, TIPOORDEN)#Para facilitar el manejo de data, filtramos por "Ubigeo"
 
 colnames(map_1) <- c("UBIGEO", "Tipoorden", "Cantidad")# Renombramos variables
-
-map_lima <- map_DIST #Cargamos la base de datos sobre los distritos del Peru
-
-colnames(map_lima) [4] <- "UBIGEO"  #renombramos la variable del DF para el merge por UBIGEO
-
-map_lima <- dplyr::filter(map_DIST, REGION == "Lima Metropolitana") #filtramos la provincia de Lima Metropolitana,
-#de la base de datos por distrito, 
 
 #creamos los dataframes para combinarlos con el dataframe que contiene la informacion sobre los distritos
 df_map_os <- filter(map_1, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
@@ -152,6 +119,7 @@ bd_final_summary <- bd_final %>%
 bd_final_summary <- bd_final_summary %>%
   arrange(desc(MONTO_TOTAL_ORDEN_ORIGINAL))
 
+#####################################################################################
 #Borramos en la base de datos resumen "- LIMA" y consideeramos a la Municipalidad
 #metropolitana de Lima como  Lima.
 
@@ -160,6 +128,7 @@ bd_final_summary$NOMBdist <- sub(" - LIMA","",bd_final_summary$NOMBdist)
 bd_final_summary$NOMBdist <- gsub("\\(|\\)","",bd_final_summary$NOMBdist)
 bd_final_summary$NOMBdist <- gsub("CHOSICA","",bd_final_summary$NOMBdist)
 bd_final_summary$NOMBdist <- gsub("LAS PALMERAS","",bd_final_summary$NOMBdist)
+####################################################################################
 
 #Sacamos un resumen solo de las ordenes de servico.
 bd_final_summary_servicio <- bd_final_summary %>%
@@ -174,7 +143,7 @@ colnames(bd_final_summary_servicio)[colnames(bd_final_summary_servicio)=="NOMBdi
 
 colnames(bd_final_summary_compra)[colnames(bd_final_summary_compra)=="NOMBdist"] <- "NOMBDIST"
 
-
+######################################################################################
 #Se descarga y abren los paquetes que se requieren para dibujar los mapas
 
 install.packages("pacman")
@@ -208,6 +177,8 @@ data_servicio <- merge(peru_d_lima, bd_final_summary_servicio, by.x = "NOMBDIST"
                        all.x = TRUE, 
                        sort = TRUE, 
                        nomatch = NULL)
+##################################################################################################
+
 #simpificamos el nombre de la columa MONTO
 colnames(data_servicio)[colnames(data_servicio)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"
 
@@ -218,37 +189,34 @@ data_compra <- merge(peru_d_lima, bd_final_summary_compra, by.x = "NOMBDIST", by
                      suffixes = c("_x","_y"), 
                      all.x = TRUE, 
                      sort = TRUE, 
-                     nomatch = NULL)
+                     nomatch = NULL)#####TOMAR EN CUENTA QUE SE HACE REFERENCIA AL MAPA DE SHP
 
-#Graficar solo LA PROVINCIA de Lima
-
-ggplot(data = peru_d %>%
-         filter(NOMBPROV=="LIMA")) +
-  geom_sf() 
-
+##################################################################################################################
 ### 2.1. Mapa distrital por monto total de ordenes de servicio----
 
 library(dplyr)
 
-# Agrupar los datos por NOMBDIST
-merged_data_grouped <- data_servicio %>% group_by(NOMBDIST)
 
-# Calcular la posici?n media de la geometr?a para cada grupo
+# Agrupar los datos por NOMBDIST
+merged_data_grouped <- data_servicio %>% group_by(NOMBDIST)####### TENER EN CUENTA
+
+# Calcular la posicion media de la geometria para cada grupo
 merged_data_grouped <- merged_data_grouped %>% summarize(x = mean(st_coordinates(data_servicio[["geometry"]])[,1]),
                                                          y = mean(st_coordinates(data_servicio[["geometry"]])[,2]),
                                                          MONTO_TOTAL = mean(MONTO_TOTAL))
 
 merged_data_filtered <- merged_data_grouped %>% filter(MONTO_TOTAL!= 0 & !is.na(MONTO_TOTAL))
 
-
+#######################################################################################################################
 
 
 library(dplyr)
+#DISTRITOS QUE GASTARON MAS 
 
 #Creamos los rangos, para diferenciar los distritos que gastaron 
-#m?s, en el cuatro trimestres del 2022
+#mas, en el cuatro trimestre del 2022
 
-merged_data_filtered <- merged_data_filtered %>% 
+merged_data_filtered <- merged_data_filtered %>% #el nombre cambiara
   mutate(fill = cut(MONTO_TOTAL, 
                     breaks = c(0, 5000000, 10000000, 15000000, Inf), 
                     labels = c("yellow", "green", "orange", "red")))
@@ -258,13 +226,16 @@ data_servicio <- data_servicio %>%
                     breaks = c(0, 5000000, 10000000, 15000000, Inf), 
                     labels = c("yellow", "green", "orange", "red")))
 
-
+###############################################################################
 #mapa
 ggplot(data = merged_data_filtered) +
   geom_sf(data = data_servicio, aes(fill = fill)) +
   ggtitle("Distritos de Lima - Monto Total - Orden de Servicio (IV Trim 2022)") +
   scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "transparent", labels = c("Bajo", "Medio","Alto", "Muy alto")) +
   labs(fill = "Exposici?n")
+
+###############################################################################
+
 
 #grafico de barras
 ggplot(merged_data_filtered, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MONTO_TOTAL), fill = fill)) +
@@ -274,6 +245,7 @@ ggplot(merged_data_filtered, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MON
   scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "white", labels = c("Bajo", "Medio","Alto", "Muy alto")) + 
   labs(x = "Monto en Miles", y = "Distritos", fill = "Exposici?n") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 
 #La municipalidad metropolitana de Lima fue la qeu se situo en 
 #el rango muy alto, sobrepasando el monto d elos 15 millones en 
@@ -285,6 +257,8 @@ ggplot(merged_data_filtered, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MON
 
 library(dplyr)
 
+
+###############################################################################
 # Agrupar los datos por NOMBDIST
 merged_data_grouped2 <- data_compra %>% group_by(NOMBDIST)
 
@@ -297,7 +271,7 @@ merged_data_grouped2 <- merged_data_grouped2 %>% summarize(x = mean(st_coordinat
 #filtramos los distritos sin informaci?n y cambiamos de nombre la columna 
 merged_data_filtered2 <- merged_data_grouped2 %>% filter(MONTO_TOTAL_ORDEN_ORIGINAL != 0 & !is.na(MONTO_TOTAL_ORDEN_ORIGINAL))
 colnames(merged_data_filtered2)[colnames(merged_data_filtered2)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"
-
+###############################################################################
 
 #se crean los rangos, pero por la difencia en montos, ahora se considera muy 
 #alto los superiores a 1500 0000 soles
@@ -307,7 +281,7 @@ merged_data_filtered2 <- merged_data_filtered2 %>%
                     labels = c("yellow", "green", "orange", "red")))
 
 
-colnames(data_compra)[colnames(data_compra)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"
+colnames(data_compra)[colnames(data_compra)=="MONTO_TOTAL_ORDEN_ORIGINAL"] <- "MONTO_TOTAL"#TENER EN CUENTA
 
 data_compra <- data_compra %>% 
   mutate(fill = cut(MONTO_TOTAL, 
@@ -315,14 +289,14 @@ data_compra <- data_compra %>%
                     labels = c("yellow", "green", "orange", "red")))
 
 
-
+#PLOT
 ggplot(data = merged_data_filtered2) +
   geom_sf(data = data_compra, aes(fill = fill)) +
   ggtitle("Distritos de Lima - Monto Total - Orden de Compra (IV Trim 2022)") +
   scale_fill_manual(values = c("yellow", "green","orange", "red"),na.value = "transparent", labels = c("Bajo", "Medio","Alto", "Muy alto")) +
   labs(fill = "Exposici?n")
 
-
+#BARRAS
 ggplot(merged_data_filtered2, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MONTO_TOTAL), fill = fill)) +
   geom_bar(stat = "identity", width = 0.6) +
   scale_y_discrete(limits = rev(levels(merged_data_filtered2$NOMBDIST))) +
@@ -341,7 +315,7 @@ ggplot(merged_data_filtered2, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MO
 
 # Se define bse de concentración de proveedores
 bd_conc_s <-  bd_final |> 
-  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Servicio" )  |> 
+  filter(TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
   mutate(momto_trim = sum(MONTO_TOTAL_ORDEN_ORIGINAL),  n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = (1 - ratio_conc)) |> 
   filter(!duplicated(UBIGEO)) |> 
@@ -349,18 +323,14 @@ bd_conc_s <-  bd_final |>
   arrange(ENTIDAD.x)
 
 bd_conc_c <-  bd_final |> 
-  filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12) & TIPOORDEN == "Orden de Compra" )  |> 
+  filter(TIPOORDEN == "Orden de Compra" )  |> 
   group_by(ENTIDAD.x) |>
   mutate(momto_trim = sum(MONTO_TOTAL_ORDEN_ORIGINAL),  n_ordenes = n(), n_distintas =  n_distinct(RUC_CONTRATISTA), ratio_conc = n_distintas/n_ordenes, inv_ratio = (1 - ratio_conc)) |> 
   filter(!duplicated(UBIGEO)) |> 
   select(1,16,20,21:29) |> 
   arrange(ENTIDAD.x)
 
-#Se visualiza en mapa
-mapa_lim <- map_DIST |> 
-  filter(DEPARTAMENTO == "Lima" & PROVINCIA == "Lima") |> 
-  rename(UBIGEO = COD_DISTRITO)
-
+#PLOT OS
 mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
   mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"1 a 2 proveedores por cada 5 contratos",
@@ -368,6 +338,7 @@ mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |>
                             ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
                             ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
                             TRUE ~ "Sin información") )
+#PLOT OC
 
 mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
@@ -378,8 +349,9 @@ mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |>
                             TRUE ~ "Sin información"  ) )
 
 
+#factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 
+#proveedores por cada 5 contratos", "3 a 4 proveedores por cada 5 contratos"," 5 proveedores por cada 5 contratos" ))
 
-#factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 proveedores por cada 5 contratos", "3 a 4 proveedores por cada 5 contratos"," 5 proveedores por cada 5 contratos" ))
 colores_s <- c("#034e7b", "#3690c0","#74a9cf", "#d0d1e6", "white")
 colores_c <- c("#cc4c02", "#fe9929","#fed98e", "#ffffd4", "white")
 
