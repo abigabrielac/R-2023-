@@ -42,49 +42,107 @@ mun_list <- read.xlsx(link_munis)
 # Finalmente, obtenemos la base de datos final para el trabajo al combinar las 
 # bases del osce para el ??ltimo trimestre de 2022 (bd_osce) con la base de datos
 # de municipalidades (mun_list). Para ello utilizamos la funci??n left_join y filter.
-# Asimismo, generamos las variables anio_emision y mes_emision que nos servir?? 
-# identificar el mes de la emisi??n. Combinamos las listas (mun_lis y bd_osce) y creamos nuevas varibles: anio de emision y mes de emision 
+# Asimismo, generamos las variables anio_emision y mes_emision que nos serviran  
+# para identificar el mes de la emision de las ordenes de compra y servicios. 
+# Debido a que nos interesa en particular el ultimo trimestre del a??o, nos quedamos
+# con las ordenes emitidas en octubre, noviembre y diciembre. 
 bd_final <- bd_osce |> 
   left_join(mun_list, by= "RUC_ENTIDAD") |> 
   filter(LIMA_MET =="Si") |> 
   subset(select = -c(19)) |> 
-  mutate(fecha_emision = as.numeric(as.Date(FECHA_DE_EMISION), "%Y-%m-%d"), fecha_registro = as.numeric(as.Date(FECHA_REGISTRO), "%Y-%m-%d"), anio_emision = substr(FECHA_DE_EMISION, 1, 4), mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")))  |> 
-  filter(mes_emision == 10 | mes_emision == 11 | mes_emision == 12)
+  mutate(fecha_emision = as.numeric(as.Date(FECHA_DE_EMISION), "%Y-%m-%d"),
+         fecha_registro = as.numeric(as.Date(FECHA_REGISTRO), "%Y-%m-%d"),
+         anio_emision = substr(FECHA_DE_EMISION, 1, 4),
+         mes_emision = as.numeric(strftime(as.Date(FECHA_DE_EMISION), "%m")),
+         mes_registro = as.numeric(strftime(as.Date(FECHA_REGISTRO), "%m")),
+         dia_registro = as.numeric(strftime(as.Date(FECHA_REGISTRO), "%d")))  |> 
+  filter(anio_emision == 2022 & (mes_emision == 10 | mes_emision == 11 | mes_emision == 12))
 
 ### Descriptivos generales ----
 
-##cuantos de los que registraron en octubre son de octubre y los de registros pasados (lo mismo para nov y dic)
-##filtrado por fecha 
-
-# Grafico de la evolucion de la os y oc, por mes.(oct, nov, dic)
-bd_final |> 
-  #filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
-  count(mes_emision , TIPOORDEN) |> 
-  ggplot() + aes(x = mes_emision , y = n) + geom_line() + geom_point() + aes(colour =TIPOORDEN) 
-
 # Cuadro de frecuencias de os y oc por municipalidad en el ultimo trimestre
-bd_final |> 
-  #filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
+cuadro1 <- bd_final |> 
   group_by(ENTIDAD.x, TIPOORDEN) |> 
   summarise(n = n()) |> 
-  arrange(desc(n))
+  spread(key = TIPOORDEN, value = n) |> 
+  mutate_all(~ ifelse(is.na(.), 0, .)) |> 
+  mutate(n_ords = `Orden de Servicio` + `Orden de Compra`) |> 
+  arrange(desc(n_ords))|> 
+  print( n = 23) 
 
 # Cuadro de montos promedio de por municipalidad en el ultimo trimestre
-bd_final |> 
-  #filter(anio_emision == "2022" & (mes_emision == 10 | mes_emision ==11 | mes_emision == 12)) |> 
+cuadro2 <- bd_final |> 
   group_by(ENTIDAD.x , TIPOORDEN) |> 
   summarise(media = mean(MONTO_TOTAL_ORDEN_ORIGINAL)) |> 
-  arrange(desc(media))
+  spread(key = TIPOORDEN, value = media) |> 
+  arrange(desc(`Orden de Servicio`))
 
-### Mapas distritales ---- (mapsPERU): borrar coordenadas y el fondo plomo 
+### Mapas distritales ---- 
+#(mapsPERU): borrar coordenadas y el fondo plomo 
 
-map_lima <- map_DIST #Cargamos la base de datos sobre los distritos del Peru
-colnames(map_lima) [4] <- "UBIGEO"  #renombramos la variable del DF para el merge por UBIGEO
-map_lima <- dplyr::filter(map_DIST, REGION == "Lima Metropolitana") #filtramos la provincia de Lima Metropolitana,
-#de la base de datos por distrito, 
+# Utilizando el paquete mapsPERU cargamos la base de datos y filtramos para los distritos de Lima Metropolitana
+map_lima <- map_DIST |> #Cargamos la base de datos sobre los distritos del Peru
+  dplyr::filter(REGION == "Lima Metropolitana") |> #filtramos la provincia de Lima Metropolitana,
+  rename(UBIGEO = COD_DISTRITO ) #renombramos la variable del DF para el merge por UBIGEO
+
+#### 0. Mapas sobre el registro  ----
+
+# Generamos la variable de registro tard??o de las ??rdenes, utilizando la funci??n
+# mutate y case_when siguiendo la definici??n de la Directiva del OSCE.
+
+bd_registro <- bd_final |> 
+  mutate(reg_a_tiempo = case_when(mes_emision == mes_registro ~ 100 ,
+                                  mes_emision == 10 & dia_registro < 9 ~ 100,
+                                  mes_emision == 11 & dia_registro < 8 ~ 100,
+                                  mes_emision == 12 & dia_registro < 6 ~ 100,
+                                  TRUE ~ 0)) |> 
+  group_by(UBIGEO, ENTIDAD.x, TIPOORDEN ) |> 
+  summarise(pct_reg_a_tiempo = mean(reg_a_tiempo)) 
+
+map_reg_os <- bd_registro |> 
+  filter(TIPOORDEN == "Orden de Servicio")  #cantidad de ordenes de servicio por ubigeo
+
+map_reg_oc <- bd_registro |> 
+  filter(TIPOORDEN == "Orden de Compra") #cantidad de ordenes de compras por ubigeo
 
 
-### 1. Cantidad de ordenes por distrito, segun tipo ----
+db_lima_reg_os <- merge(x = map_lima, y = map_reg_os, by = "UBIGEO", all.x = TRUE) |>  #Juntamos las bases de datos: 
+  arrange(desc(pct_reg_a_tiempo)) |> 
+  mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OS registradas a tiempo",
+                                  pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OS registradas a tiempo",
+                                  pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OS registradas a tiempo",
+                                  TRUE ~ "Sin informaci??n"))
+
+db_lima_reg_oc <- merge(x = map_lima, y = map_reg_oc, by = "UBIGEO", all.x = TRUE) |> #Juntamos las bases de datos: 
+  arrange(desc(pct_reg_a_tiempo)) |> 
+  mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OC registradas a tiempo",
+                                  pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OC registradas a tiempo",
+                                  pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OC registradas a tiempo",
+                                  TRUE ~ "Sin informaci??n"))
+
+
+colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white")
+colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white")
+
+db_lima_reg_os |> 
+  ggplot() +
+  aes(geometry=geometry) +
+  scale_fill_manual(values=colores_s)+
+  geom_sf(aes(fill=cat_registro)) +
+  labs(title = "Imagen 1. Porcentaje de ordenes de servicio registradas a tiempo")+
+  guides(fill=guide_legend(title="Porcentaje de ??rdenes de servicio registradas a tiempo"))
+
+db_lima_reg_oc |> 
+  ggplot() +
+  aes(geometry=geometry) +
+  scale_fill_manual(values=colores_c)+
+  geom_sf(aes(fill=cat_registro)) +
+  labs(title = "Imagen 2. Porcentaje de ordenes de compra registradas a tiempo")+
+  guides(fill=guide_legend(title="Porcentaje de ??rdenes de compra registradas a tiempo")) +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+
+
+#### 1. Cantidad de ordenes por distrito, segun tipo ----
 
 map_1 <- bd_final |> count(UBIGEO, TIPOORDEN)#Para facilitar el manejo de data, filtramos por "Ubigeo"
 
@@ -94,7 +152,7 @@ colnames(map_1) <- c("UBIGEO", "Tipoorden", "Cantidad")# Renombramos variables
 df_map_os <- filter(map_1, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
 df_map_oc <- filter(map_1, Tipoorden == "Orden de Compra")#cantidad de ordenes de compras por ubigeo
 
-###1.1. Cantidad de Ordenes de Servicio, por distrito ----
+##### 1.1. Cantidad de Ordenes de Servicio, por distrito ----
 db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 #la que contiene la informacion de los distritos y la que posee la informacion 
 #sobre las ordenes de servicio y la cantidad por distrito.
@@ -107,7 +165,7 @@ OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
   scale_fill_gradient("Cantidad de ordenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")
 OS #Visualizacion de datos para OS
 
-###1.2. Cantidad de Ordenes de Compra, por distrito----
+##### 1.2. Cantidad de Ordenes de Compra, por distrito----
 db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 #la que contiene la informacion de los distritos y la que posee la informacion 
 #sobre las ordenes de compra y la cantidad por distrito.
@@ -120,7 +178,7 @@ OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
 OC #Visualizacion de datos para OC
 
 
-### 2. Montos designados por distrito, seg??n tipo ----
+####  2. Montos designados por distrito, seg??n tipo ----
 
 # Calculamos el total de monto desembOlsado por Municipalidad Distrital y por el
 #tipo de orden (compra , servicio)
@@ -206,7 +264,7 @@ data_compra <- merge(peru_d_lima, bd_final_summary_compra, by.x = "NOMBDIST", by
                      nomatch = NULL)#####TOMAR EN CUENTA QUE SE HACE REFERENCIA AL MAPA DE SHP
 
 ##################################################################################################################
-### 2.1. Mapa distrital por monto total de ordenes de servicio----
+##### 2.1. Mapa distrital por monto total de ordenes de servicio----
 
 library(dplyr)
 
@@ -267,7 +325,7 @@ ggplot(merged_data_filtered, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MON
 #seguido por el distrito de miraflores y Lurigancho(Chosica)
 
 
-### 2.2. Mapa distrital por monto total de ordenes de compra----
+##### 2.2. Mapa distrital por monto total de ordenes de compra----
 
 library(dplyr)
 
@@ -325,7 +383,7 @@ ggplot(merged_data_filtered2, aes(x = MONTO_TOTAL/1000, y = reorder(NOMBDIST, MO
 #seguido por el distrito de Villa Maria del Triunfo y Lima.
 
 
-### 3. Concentraci??n proveedores ----
+####  3. Concentraci??n proveedores ----
 
 # Se define bse de concentraci??n de proveedores
 bd_conc_s <-  bd_final |> 
@@ -369,7 +427,7 @@ mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |>
 colores_s <- c("#034e7b", "#3690c0","#74a9cf", "#d0d1e6", "white")
 colores_c <- c("#cc4c02", "#fe9929","#fed98e", "#ffffd4", "white")
 
-###3.1.Concentracion de proveedores por Ordenes de Servicios----
+##### 3.1.Concentracion de proveedores por Ordenes de Servicios----
 mapa_conc_s |> 
   ggplot() +
   aes(geometry=geometry) +
@@ -378,7 +436,7 @@ mapa_conc_s |>
   labs(title = "Imagen 5. Concentraci??n de proveedores por ??rdenes de servicio")+
   guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
 
-###3.2.Concentracion de proveedores por Ordenes de Compras----
+##### 3.2.Concentracion de proveedores por Ordenes de Compras----
 
 mapa_conc_c |>
   ggplot() +
