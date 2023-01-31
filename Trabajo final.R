@@ -124,7 +124,7 @@ db_lima_reg_oc <- merge(x = map_lima, y = map_reg_oc, by = "UBIGEO", all.x = TRU
 colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white") #Definimos manualmente los colores del mapa
 colores_c <- c("#fed98e", "#fe9929","#cc4c02", "white") #Definimos manualmente los colores del mapa
 
-db_lima_reg_os |> 
+plot_os <- db_lima_reg_os |> 
   ggplot() +
   aes(geometry=geometry) +
   scale_fill_manual(values=colores_s)+
@@ -132,7 +132,7 @@ db_lima_reg_os |>
   labs(title = "Imagen 1. Porcentaje de ordenes de servicio registradas a tiempo")+
   guides(fill=guide_legend(title="Porcentaje de ??rdenes de servicio registradas a tiempo"))
 
-db_lima_reg_oc |> 
+plot_oc <- db_lima_reg_oc |> 
   ggplot() +
   aes(geometry=geometry) +
   scale_fill_manual(values=colores_c)+
@@ -140,6 +140,11 @@ db_lima_reg_oc |>
   labs(title = "Imagen 2. Porcentaje de ordenes de compra registradas a tiempo")+
   guides(fill=guide_legend(title="Porcentaje de ??rdenes de compra registradas a tiempo")) +
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+
+library(plotly)
+
+plotly::ggplotly(plot_os) 
+plotly::ggplotly(plot_oc) 
 
 
 #### 1. Cantidad de ordenes por distrito, segun tipo ----
