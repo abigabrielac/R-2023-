@@ -78,14 +78,13 @@ cuadro2 <- bd_final |>
   arrange(desc(`Orden de Servicio`))
 
 ### Mapas distritales ---- 
-#(mapsPERU): borrar coordenadas y el fondo plomo 
 
 # Utilizando el paquete mapsPERU cargamos la base de datos y filtramos para los distritos de Lima Metropolitana
 map_lima <- map_DIST |> #Cargamos la base de datos sobre los distritos del Peru
   dplyr::filter(REGION == "Lima Metropolitana") |> #filtramos la provincia de Lima Metropolitana,
   rename(UBIGEO = COD_DISTRITO ) #renombramos la variable del DF para el merge por UBIGEO
 
-#### 0. Mapas sobre el registro  ----
+#### 1. Mapas sobre el registro  ----
 
 # Generamos la variable de registro tard??o de las ??rdenes, utilizando la funci??n
 # mutate y case_when siguiendo la definici??n de la Directiva del OSCE.
@@ -147,7 +146,7 @@ plotly::ggplotly(plot_os)
 plotly::ggplotly(plot_oc) 
 
 
-#### 1. Cantidad de ordenes por distrito, segun tipo ----
+#### 2. Cantidad de ordenes por distrito, segun tipo ----
 
 map_1 <- bd_final |> count(UBIGEO, TIPOORDEN)#Para facilitar el manejo de data, filtramos por "Ubigeo"
 
@@ -157,7 +156,7 @@ colnames(map_1) <- c("UBIGEO", "Tipoorden", "Cantidad")# Renombramos variables
 df_map_os <- filter(map_1, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
 df_map_oc <- filter(map_1, Tipoorden == "Orden de Compra")#cantidad de ordenes de compras por ubigeo
 
-##### 1.1. Cantidad de Ordenes de Servicio, por distrito ----
+##### 2.1. Cantidad de Ordenes de Servicio, por distrito ----
 db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 #la que contiene la informacion de los distritos y la que posee la informacion 
 #sobre las ordenes de servicio y la cantidad por distrito.
@@ -172,7 +171,7 @@ OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
 OS 
 OS #Visualizacion de datos para OS
 
-##### 1.2. Cantidad de Ordenes de Compra, por distrito----
+##### 2.2. Cantidad de Ordenes de Compra, por distrito----
 db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 #la que contiene la informacion de los distritos y la que posee la informacion 
 #sobre las ordenes de compra y la cantidad por distrito.
@@ -186,7 +185,7 @@ OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
 OC #Visualizacion de datos para OC
 
 
-####  2. Montos designados por distrito, segun tipo de orden  ----
+####  3. Montos designados por distrito, segun tipo de orden  ----
 
 # Para iniciar el analisis, se calcula los montos totales por distrito y por tipo de orden.
 # para obtener este reporte se agrupa la base de datos por UBIGEO y tipo de oden.
@@ -206,7 +205,7 @@ colnames(monto_oyc) <- c("UBIGEO", "Tipoorden", "Monto_Total") #renombrar las co
 df_monto_os <- filter(monto_oyc, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
 df_monto_oc <- filter(monto_oyc, Tipoorden == "Orden de Compra")#cantidad de ordenes de compras por ubigeo
 
-##### 2.1. Montos totales de Ordenes de Servicio, por distrito ----
+##### 3.1. Montos totales de Ordenes de Servicio, por distrito ----
 
 db_lima_monto_OS <- merge(x = map_lima, y = df_monto_os, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 
@@ -260,7 +259,7 @@ monto_OS_barras
 #cuatro distrisos que lo acompanan son:Lurigancho(Chosica), Miraflores, Comas y San Borja, con 
 #montos que no superan el 50% de lo claculado para el distrito de LIma.
 
-##### 2.2. Montos totales de Ordenes de Compra, por distrito ----
+##### 3.2. Montos totales de Ordenes de Compra, por distrito ----
 
 db_lima_monto_OC <- merge(x = map_lima, y = df_monto_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
 
@@ -361,7 +360,6 @@ mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |>
 colores_s <- c("#034e7b", "#3690c0","#74a9cf", "#d0d1e6", "white")
 colores_c <- c("#cc4c02", "#fe9929","#fed98e", "#ffffd4", "white")
 
-##### 3.1.Concentracion de proveedores por Ordenes de Servicios----
 mapa_conc_s |> 
   ggplot() +
   aes(geometry=geometry) +
@@ -371,7 +369,7 @@ mapa_conc_s |>
   guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))+
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 
-##### 3.2.Concentracion de proveedores por Ordenes de Compras----
+##### 4.2.Concentracion de proveedores por Ordenes de Compras----
 
 mapa_conc_c |>
   ggplot() +
