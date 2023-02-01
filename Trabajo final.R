@@ -111,14 +111,14 @@ db_lima_reg_os <- merge(x = map_lima, y = map_reg_os, by = "UBIGEO", all.x = TRU
   mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OS registradas a tiempo",
                                   pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OS registradas a tiempo",
                                   pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OS registradas a tiempo",
-                                  TRUE ~ "Sin informaci??n")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
+                                  TRUE ~ "Sin informacion")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
 
 db_lima_reg_oc <- merge(x = map_lima, y = map_reg_oc, by = "UBIGEO", all.x = TRUE) |> #Juntamos las bases de datos: 
   arrange(desc(pct_reg_a_tiempo)) |> 
   mutate(cat_registro = case_when(pct_reg_a_tiempo<33 ~"1. Menos 33% de las OC registradas a tiempo",
                                   pct_reg_a_tiempo<66 & pct_reg_a_tiempo>=33 ~"2. Entre 33% y 66% de las OC registradas a tiempo",
                                   pct_reg_a_tiempo>=66 ~"3. M??s del 66% de las OC registradas a tiempo",
-                                  TRUE ~ "Sin informaci??n")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
+                                  TRUE ~ "Sin informacion")) # Creamos una variable categ??rica que nos permita hacer la leyenda del mapa
 
 
 colores_s <- c("#74a9cf", "#3690c0", "#034e7b", "white") #Definimos manualmente los colores del mapa
@@ -130,7 +130,7 @@ plot_os <- db_lima_reg_os |>
   scale_fill_manual(values=colores_s)+
   geom_sf(aes(fill=cat_registro)) +
   labs(title = "Imagen 1. Porcentaje de ordenes de servicio registradas a tiempo")+
-  guides(fill=guide_legend(title="Porcentaje de ??rdenes de servicio registradas a tiempo"))
+  guides(fill=guide_legend(title="Porcentaje de Ordenes de servicio registradas a tiempo"))
 
 plot_oc <- db_lima_reg_oc |> 
   ggplot() +
@@ -138,7 +138,7 @@ plot_oc <- db_lima_reg_oc |>
   scale_fill_manual(values=colores_c)+
   geom_sf(aes(fill=cat_registro)) +
   labs(title = "Imagen 2. Porcentaje de ordenes de compra registradas a tiempo")+
-  guides(fill=guide_legend(title="Porcentaje de ??rdenes de compra registradas a tiempo")) +
+  guides(fill=guide_legend(title="Porcentaje de Ordenes de compra registradas a tiempo")) +
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 
 library(plotly)
@@ -165,9 +165,11 @@ db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #J
 
 OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 1. Cantidad de ??rdenes de Servicio IV Trim")+
+  ggtitle("Imagen 1. Cantidad de &oacuterdenes de Servicio IV Trim")+
   labs(x = "", y = "")+
-  scale_fill_gradient("Cantidad de ordenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")
+  scale_fill_gradient("Cantidad de &oacuterdenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+OS 
 OS #Visualizacion de datos para OS
 
 ##### 1.2. Cantidad de Ordenes de Compra, por distrito----
@@ -177,9 +179,10 @@ db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #J
 
 OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 2. Cantidad de ??rdenes de Compra IV Trim")+
+  ggtitle("Imagen 2. Cantidad de &oacuterdenes de Compra IV Trim")+
   labs(x = "", y = "")+
-  scale_fill_gradient("Cantidad de ordenes de compra", low = "yellow", high = "red", na.value = "white") 
+  scale_fill_gradient("Cantidad de &oacuterdenes de compra", low = "yellow", high = "red", na.value = "white")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 OC #Visualizacion de datos para OC
 
 
@@ -314,9 +317,11 @@ sum(db_lima_monto_OS_clean$Monto_Total)
 
 sum(db_lima_monto_OC_clean$Monto_Total)
 
-####  3. Concentraci??n proveedores ----
+####  3. Concentración de proveedores ----
 
-# Se define bse de concentraci??n de proveedores
+# Se define bse de concentración de proveedores
+
+## BD órdenes de servicio (OS)
 bd_conc_s <-  bd_final |> 
   filter(TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
@@ -325,6 +330,7 @@ bd_conc_s <-  bd_final |>
   select(1,16,20,21:29) |> 
   arrange(ENTIDAD.x)
 
+## BD órdenes de compra (OC)
 bd_conc_c <-  bd_final |> 
   filter(TIPOORDEN == "Orden de Compra" )  |> 
   group_by(ENTIDAD.x) |>
@@ -333,7 +339,7 @@ bd_conc_c <-  bd_final |>
   select(1,16,20,21:29) |> 
   arrange(ENTIDAD.x)
 
-#PLOT OS
+## Merge con mapa PLOT OS
 mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
   mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"1 a 2 proveedores por cada 5 contratos",
@@ -341,7 +347,7 @@ mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |>
                             ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
                             ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
                             TRUE ~ "Sin informaci??n") )
-#PLOT OC
+## Merge con mapa PLOT OC
 
 mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
@@ -351,10 +357,7 @@ mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |>
                             ratio_conc>0.8~ "De 5 por cada 5 contratos",
                             TRUE ~ "Sin informaci??n"  ) )
 
-
-#factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 
-#proveedores por cada 5 contratos", "3 a 4 proveedores por cada 5 contratos"," 5 proveedores por cada 5 contratos" ))
-
+## Colores para los mapas
 colores_s <- c("#034e7b", "#3690c0","#74a9cf", "#d0d1e6", "white")
 colores_c <- c("#cc4c02", "#fe9929","#fed98e", "#ffffd4", "white")
 
@@ -364,8 +367,9 @@ mapa_conc_s |>
   aes(geometry=geometry) +
   scale_fill_manual(values=colores_s)+
   geom_sf(aes(fill=cat_conc)) +
-  labs(title = "Imagen 5. Concentraci??n de proveedores por ??rdenes de servicio")+
-  guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
+  labs(title = "Imagen 5. Concentración de proveedores por órdenes de servicio")+
+  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 
 ##### 3.2.Concentracion de proveedores por Ordenes de Compras----
 
@@ -375,5 +379,6 @@ mapa_conc_c |>
   scale_fill_manual(values=colores_c)+
   #scale_fill_brewer(palette = "RdGy", na.value = "white")+
   geom_sf(aes(fill=cat_conc))+
-  labs(title = "Imagen 6. Concentraci??n de proveedores por ??rdenes de compra")+
-  guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
+  labs(title = "Imagen 6. Concentración de proveedores por órrdenes de compra")+
+  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
