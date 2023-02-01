@@ -10,6 +10,7 @@ output:
 
 # 1. Introducci??n
 
+<div style="text-align: justify">
 La efectividad de la gesti??n de los recursos p??blicos resulta fundamental para la reducci??n de las brechas sociales, la provisi??n de servicios p??blicos y la promoci??n del crecimiento econ??mico (Evans & Rauch, 1999; Acemoglu, 2005; Besley & Persson, 2010). Sin embargo, la calidad de esta gesti??n es limitada en Am??rica Latina y, en espec??fico, en el Per??. De hecho, de acuerdo con el ??ndice de Desarrollo del Servicio Civil, el Per?? cuenta con una gesti??n no ??ptima obteniendo un puntaje de 41 sobre 100 posibles (BID, 2018).
 
 Asimismo, otro de los limitantes de la gesti??n de recursos p??blicos est?? asociada a la corrupci??n de funcionarios. De acuerdo con la Contralor??a General de la Rep??blica (CGR), en el 2021 la incidencia de la corrupci??n alcanz?? al 13.6% del presupuesto p??blico del gobierno general (CGR, 2022). En cuanto a el destino de los recursos p??blicos, se ha identificado que la compra de bienes y servicios por parte de las entidades p??blicas representan el segundo concepto de mayor incidencia de corrupci??n (13.6%) despu??s de la inversi??n p??blica (15%). En este mismo estudio, la CGR identific?? que la provincia de Lima Metropolitana concentr?? el 19.8% del da??o patrimonial generado por el gobierno general en las compras de bienes y servicios. 
@@ -19,10 +20,41 @@ Los procesos de compras p??blicas en el Per?? se rigen por la Ley de Contratacio
 Considerando lo anterior, el presente trabajo tiene como objetivo identificar y analizar las compras p??blicas directas (menores a 8 UIT) de bienes y servicios por parte de las municipalidades distritales de Lima Metropolitana en el ??ltimo trimestre del 2022. En particular, el trabajo busca explorar los datos provistos por el Portal de Datos Abiertos del OSCE sobre las ??rdenes de compra y servicio utilizando principalmente los paquetes 'tidyverse', 'ggplot2' y 'mapsPERU' para la manipulaci??n y visualizaci??n de los resultados. 
 
 Las siguientes secciones del documento se organizan de la siguiente manera: la segunda secci??n presenta un conjunto de antecedentes relacionados a las compras p??blicas en el Per??; la tercera secci??n detalla la metodolog??a utilizada en el estudio; la cuarta secci??n presenta los resultados del an??lisis y una discusi??n sobre los mismos; la quinta secci??n presenta las conclusiones encontradas y la ??ltima secci??n presenta la bibliograf??a utilizada. 
+<div/>
 
 # 2. Antecedentes
 
 # 3. Metodolog??a
+
+<div style="text-align: justify">
+El presente estudio fue trabajado desde un enfoque cuantitativo. Debido a que el objetivo principal era reconocer la cantidad de presupuesto público designado a compras menores a 8UIT (según tipo) de las diferentes municipalidades distritales de la provincia de Lima Metropolitana, específicamente, las compras relacionadas al último trimestre del año 2022, accedimos a la base de datos del portal CONOSCE del Organismo Supervisor de las Contrataciones del Estado - OSCE. Dicho portal concentra información relacionada a contrataciones con el estado realizada por proveedores, consorcios y entidades públicas.
+
+Este trabajo comprendió dos etapas: (i) Recopilación de literatura sobre el tema, y (ii) manejo de la base de datos. Por un lado, la recopilación de la literatura se centró en la revisión de la Ley de Contrataciones con el Estado, investigaciones y notas periodísticas. Por otro lado, para el manejo de la base de datos, se utilizó el lenguaje de programación de R, así como la búsqueda de paquetes para ese entorno que nos permitiera transformar la data y visualizarla a partir de mapas informativos de la provincia de Lima Metropolitana para identificar las zonas donde se concentraban lo siguientes ítems:
+
+*-* Número de órdenes de servicio y compra por distrito, el cual nos ha permitido visualizar donde se concentra el mayor número de ordenes según tipo en función a cada distrito. 
+*-* Montos designados, según tipo. A partir de él se buscaba reflejar qué distrito había designado mayor presupuesto público por tipo de orden.
+*-* Concentración de proveedores. A través de él se buscaba demostrar en qué distritos existió una mayor concentración de proveedores, según tipo. 
+<div/>
+
+**Sobre el manejo de la data**
+
+<div style="text-align: justify">
+El portal de CONOSCE nos ofrecía descargar las bases de datos por mes, para este fin, fue: octubre, noviembre y diciembre. La información que nos importaba de ellas eran: (i) Municipalidad, (ii) RUC de la entidad, (iii) Fecha de registro, (iv) Fecha de emisión, (v) Tipo de orden, (vi) monto designado y (vii) RUC del contratista. 
+
+Sin embargo, debido a que las bases no se encontraban divididas por distritos, y no todas las municipalidades habían emitido órdenes durante los meses establecidos, se tuvo que descargar una base adicional donde se tenía en cuenta lo siguiente: (i) Municipalidad, (ii) RUC, (iii) Distrito y (iv) Ubigeo. 
+
+De esa manera, juntamos ambas bases para seguir con el proceso de manipulación de información. Posteriormente, la base resultante fue unida a la base de datos por distrito que nos ofrecía mapsPERU para la visualización de datos a través del mapa de Lima Metropolitana. 
+<div/>
+
+**Sobre los paquetes de R**
+
+<div style="text-align: justify">
+Los paquetes utilizados, fueron: `Tidyverse`, `GGPLOT2` y `mapsPERU`. 
+
+El paquete `Tidyverse` nos permitió limpiar la data, ordenar la información y crear nuevos data sets. Para el caso del paquete mapsPERU (Recuperado en: https://github.com/musajajorge/mapsPERU)  y `GGPLOT2` nos permitieron graficar el mapa de Lima Metropolitana dividida por distrito, según los ítems descritos anteriormente. 
+
+`mapsPERU` fue creado en diciembre del 2021, en él podemos encontrar bases de datos para graficar el mapa del Perú, ya sea por departamento y distrito. 
+<div/>
 
 # 4. Resultados y discusi??n
 
@@ -86,13 +118,78 @@ bd_final <- bd_osce |>
          mes_registro = as.numeric(strftime(as.Date(FECHA_REGISTRO), "%m")),
          dia_registro = as.numeric(strftime(as.Date(FECHA_REGISTRO), "%d")))  |> 
   filter(anio_emision == 2022 & (mes_emision == 10 | mes_emision == 11 | mes_emision == 12))
+
+### Mapas distritales ---- 
+#(mapsPERU): borrar coordenadas y el fondo plomo 
+
+# Utilizando el paquete mapsPERU cargamos la base de datos y filtramos para los distritos de Lima Metropolitana
+map_lima <- map_DIST |> #Cargamos la base de datos sobre los distritos del Peru
+  dplyr::filter(REGION == "Lima Metropolitana") |> #filtramos la provincia de Lima Metropolitana,
+  rename(UBIGEO = COD_DISTRITO ) #renombramos la variable del DF para el merge por UBIGEO
+```
+
+
+## 4.2. Cantidad de ordenes de compra y servicio, por municipalidad
+
+<div style="text-align: justify">
+En el siguiente apartado, presentaremos la cantidad de órdenes de servicio y compra obtenidas por municipalidad distrital.
+
+De los resultados obtenidos observamos que, de las 43 municipalidades distritales en Lima Metropolitana, solo 23 registraron sus órdenes de servicio y 19 sus órdenes de compra.
+
+Asimismo, como se visualiza en la **Imagen 1.**, las tres municipalidades que registraron un mayor número de órdenes de servicio fueron: Lima (7313), Miraflores (1511) y Lurigancho-Chosica (1430).  Al contrario de Chaclacayo y Puente Piedra, que solo emitió 56 y 106 órdenes de servicio respectivamente. 
+<div/>
+
+``` {r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+map_1 <- bd_final |> count(UBIGEO, TIPOORDEN)#Para facilitar el manejo de data, filtramos por "Ubigeo"
+
+colnames(map_1) <- c("UBIGEO", "Tipoorden", "Cantidad")# Renombramos variables
+
+#creamos los dataframes para combinarlos con el dataframe que contiene la informacion sobre los distritos
+df_map_os <- filter(map_1, Tipoorden == "Orden de Servicio")#cantidad de ordenes de servicio por ubigeo
+df_map_oc <- filter(map_1, Tipoorden == "Orden de Compra")#cantidad de ordenes de compras por ubigeo
+
+db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
+#la que contiene la informacion de los distritos y la que posee la informacion 
+#sobre las ordenes de servicio y la cantidad por distrito.
+
+
+OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
+  geom_sf(aes(fill = Cantidad)) +
+  ggtitle("Imagen 1. Cantidad de Órdenes de Servicio IV Trim")+
+  labs(x = "", y = "")+
+  scale_fill_gradient("Cantidad de órdenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+OS #Visualizacion de datos para OS
+
+plotly::ggplotly(OS) 
+```
+
+<div style="text-align: justify">
+Para el caso de las órdenes de compra, Lima (266) y Villa María del Triunfo (106) fueron las municipalidades que concentraron una mayor cantidad de órdenes de compra. En contraposición de San Bartolo (2), Pueblo Libre (3) y Jesús María (4), que emitieron menos de 5 órdenes de compra cada una. (Ver **Imagen 2.**)
+<div/>
+
+``` {r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #Juntamos las bases de datos: 
+#la que contiene la informacion de los distritos y la que posee la informacion 
+#sobre las ordenes de compra y la cantidad por distrito.
+
+OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
+  geom_sf(aes(fill = Cantidad)) +
+  ggtitle("Imagen 2. Cantidad de Órdenes de Compra IV Trim")+
+  labs(x = "", y = "")+
+  scale_fill_gradient("Cantidad de órdenes de compra",low = "yellow" , high = "red", na.value = "white")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+OC #Visualizacion de datos para OC
+plotly::ggplotly(OC) 
 ```
 
 ## 4.1. Registro oportuno de las ??rdenes de compra y servicio
 
+<div style="text-align: justify">
 Un primer foco de nuestra atencion reside en el registro oportuno de las ordenes de servicio. De acuerdo con la Directiva N?? 003-2020-OSCE/CD, el registro de las contrataciones en el SEACE de las ??rdenes de compra y servicio debe realizarse "(...) a partir del d??a siguiente de emitida la ??rden respectiva, siendo el plazo m??ximo de cinco d??as h??biles del mes siguiente." (OSCE, 2020). Esto quiere decir que una entidad realiza sus compras a tiempo siempre y cuando registre sus ??rdenes de compra y servicio antes del sexto d??a h??bil del mes siguiente.
 
 Para evaluar el adecuado registro de las ordenes de compra, se ha calculado el porcentaje de ??rdenes de compra y ??rdenes de servicio que cada una de las municipalidades distritales ha registrado a tiempo en el ??ltimo trimestre del 2022. Revisando esta informaci??n se observa que solo 3 y 4 municipalidades distritales registraron a tiempo el 100% de sus ??rdenes de servicios y compras, respectivamente. De hecho, la ??nica que registr?? a tiempo todas las ??rdenes de servicios y compras del ??ltimo trimestre de 2022 fue la Municipalidad Metropolitana de Lima. En contraste, 12 municipalidades distritales no registraron a tiempo ninguna de sus ??rdenes de servicio en el ??ltimo trimestre del 2022, mientras que 9 municipalidades en el caso de las ??rdenes de compra. Esto sumado a que cerca de 20 de las 43 municipalidades de Lima Metropolitana no han registrado ninguna ??rden de servicio en el SEACE en el ??ltimo trimestre, da cuenta del d??ficit en la oportunidad del registro de las ??rdenes de compra y servicio en los gobiernos subnacionales.
+<div/>
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 bd_registro <- bd_final |> 
