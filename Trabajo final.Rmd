@@ -1,6 +1,6 @@
 ---
 title: "Trabajo final - Grupo 4"
-author: "Calvo, Gabriela; Ib????ez ??ngel; N????ez, C??sar; Orellana, Cristian"
+author: "Calvo, Gabriela; Ib&aacute&ntildeez &aacutengel; N&uacute&ntildeez, C&eacutesar; Orellana, Cristian"
 date: "2023-01-31"
 output:
   prettydoc::html_pretty:

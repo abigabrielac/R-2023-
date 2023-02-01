@@ -165,9 +165,11 @@ db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #J
 
 OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 1. Cantidad de ??rdenes de Servicio IV Trim")+
+  ggtitle("Imagen 1. Cantidad de &oacuterdenes de Servicio IV Trim")+
   labs(x = "", y = "")+
-  scale_fill_gradient("Cantidad de ordenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")
+  scale_fill_gradient("Cantidad de &oacuterdenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
+OS 
 OS #Visualizacion de datos para OS
 
 ##### 1.2. Cantidad de Ordenes de Compra, por distrito----
@@ -177,9 +179,10 @@ db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #J
 
 OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 2. Cantidad de ??rdenes de Compra IV Trim")+
+  ggtitle("Imagen 2. Cantidad de &oacuterdenes de Compra IV Trim")+
   labs(x = "", y = "")+
-  scale_fill_gradient("Cantidad de ordenes de compra", low = "yellow", high = "red", na.value = "white") 
+  scale_fill_gradient("Cantidad de &oacuterdenes de compra", low = "yellow", high = "red", na.value = "white")+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 OC #Visualizacion de datos para OC
 
 
