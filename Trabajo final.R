@@ -317,9 +317,11 @@ sum(db_lima_monto_OS_clean$Monto_Total)
 
 sum(db_lima_monto_OC_clean$Monto_Total)
 
-####  3. Concentraci??n proveedores ----
+####  3. Concentración de proveedores ----
 
-# Se define bse de concentraci??n de proveedores
+# Se define bse de concentración de proveedores
+
+## BD órdenes de servicio (OS)
 bd_conc_s <-  bd_final |> 
   filter(TIPOORDEN == "Orden de Servicio" )  |> 
   group_by(ENTIDAD.x) |>
@@ -328,6 +330,7 @@ bd_conc_s <-  bd_final |>
   select(1,16,20,21:29) |> 
   arrange(ENTIDAD.x)
 
+## BD órdenes de compra (OC)
 bd_conc_c <-  bd_final |> 
   filter(TIPOORDEN == "Orden de Compra" )  |> 
   group_by(ENTIDAD.x) |>
@@ -336,7 +339,7 @@ bd_conc_c <-  bd_final |>
   select(1,16,20,21:29) |> 
   arrange(ENTIDAD.x)
 
-#PLOT OS
+## Merge con mapa PLOT OS
 mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
   mutate(cat_conc=case_when(ratio_conc>0.2 & ratio_conc<=0.4~"1 a 2 proveedores por cada 5 contratos",
@@ -344,7 +347,7 @@ mapa_conc_s <- left_join(mapa_lim, bd_conc_s, by="UBIGEO") |>
                             ratio_conc>0.6 & ratio_conc<=0.8~"3 a 4 proveedores por cada 5 contratos",
                             ratio_conc>0.8~ "5 proveedores por cada 5 contratos",
                             TRUE ~ "Sin informaci??n") )
-#PLOT OC
+## Merge con mapa PLOT OC
 
 mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |> 
   arrange(desc(ratio_conc)) |> 
@@ -354,10 +357,7 @@ mapa_conc_c <- left_join(mapa_lim, bd_conc_c, by="UBIGEO") |>
                             ratio_conc>0.8~ "De 5 por cada 5 contratos",
                             TRUE ~ "Sin informaci??n"  ) )
 
-
-#factor(mapa_conc_s$cat_conc, levels = c("1 a 2 proveedores por cada 5 contratos","2 a 3 
-#proveedores por cada 5 contratos", "3 a 4 proveedores por cada 5 contratos"," 5 proveedores por cada 5 contratos" ))
-
+## Colores para los mapas
 colores_s <- c("#034e7b", "#3690c0","#74a9cf", "#d0d1e6", "white")
 colores_c <- c("#cc4c02", "#fe9929","#fed98e", "#ffffd4", "white")
 
@@ -367,8 +367,9 @@ mapa_conc_s |>
   aes(geometry=geometry) +
   scale_fill_manual(values=colores_s)+
   geom_sf(aes(fill=cat_conc)) +
-  labs(title = "Imagen 5. Concentraci??n de proveedores por ??rdenes de servicio")+
-  guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
+  labs(title = "Imagen 5. Concentración de proveedores por órdenes de servicio")+
+  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 
 ##### 3.2.Concentracion de proveedores por Ordenes de Compras----
 
@@ -378,5 +379,6 @@ mapa_conc_c |>
   scale_fill_manual(values=colores_c)+
   #scale_fill_brewer(palette = "RdGy", na.value = "white")+
   geom_sf(aes(fill=cat_conc))+
-  labs(title = "Imagen 6. Concentraci??n de proveedores por ??rdenes de compra")+
-  guides(fill=guide_legend(title="N?? de proveedores distintos adjudicados"))
+  labs(title = "Imagen 6. Concentración de proveedores por órrdenes de compra")+
+  guides(fill=guide_legend(title="N° de proveedores distintos adjudicados"))+
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
