@@ -23,27 +23,40 @@ Las siguientes secciones del documento se organizan de la siguiente manera: la s
 <div/>
 
 # 2. Antecedentes
+<div style="text-align: justify"> #abrir
+
+Las compras por montos de hasta 8 UIT son aquellas contrataciones del Estado que se encuentran excluidas del ??mbito de aplicaci??n de la Ley de Contrataciones del Estado (LCE), pero son supervisadas por el Organismo Supervisor de las Contrataciones del Estado (OSCE). De acuerdo al portal CONOSCE, estas compras representan en promedio entre el 20 - 25% del total de las contrataciones en el Estado.
+
+Dada la exclusi??n del ??mbito de la ley de contrataciones de estas compras, cada entidad es responsable de regular este tipo de contrataciones. Por ello, este tipo de contrataciones est?? sujeto a mayor discrecionalidad por parte de las entidades del Estado. 
+
+Actualmente, las entidades del Estado est??n obligadas a hacer el registro de estas contrataciones en un plazo no mayor a los 5 d??as h??biles del siguiente mes seg??n DIRECTIVA N$B!k(B 003-2020-OSCE/CD emitida por el OSCE. Sin embargo, se identifica el mismo portal de acceso p??blico del OSCE la poca puntualidad del registro as?? como la baja calidad en el detalle de la informaci??n que se registran de estas contrataciones.
+
+Cabe resaltar que, De acuerdo con el DU N$B!k(B 016-2022, emitido el 26 de junio de 2022, hasta el 31 de diciembre del 2022 se se consideran contrataciones excluidas del ??mbito de aplicaci??n de la LCE las compras por montos iguales o inferiores a nueve (9) UIT. De esta manera, durante el a??o 2022 el umbral m??ximo para efectuar este tipo de contrataciones ascendi?? a S/41,400.
+
+Asimismo, el a??o 2022 fue el ??ltimo a??o de gesti??n de los gobernadores locales elegidos en los comicios electorales del 2018. En este contexto, el presente trabajo busca describir las contrataciones por montos de hasta 9UIT con el objetivo de visualizar algunas estad??sticas  de estas contrataciones en su ??ltimo trimestre de gesti??n. 
+
+<div/>??#cerrar
 
 # 3. Metodolog??a
 
 <div style="text-align: justify">
-El presente estudio fue trabajado desde un enfoque cuantitativo. Debido a que el objetivo principal era reconocer la cantidad de presupuesto público designado a compras menores a 8UIT (según tipo) de las diferentes municipalidades distritales de la provincia de Lima Metropolitana, específicamente, las compras relacionadas al último trimestre del año 2022, accedimos a la base de datos del portal CONOSCE del Organismo Supervisor de las Contrataciones del Estado - OSCE. Dicho portal concentra información relacionada a contrataciones con el estado realizada por proveedores, consorcios y entidades públicas.
+El presente estudio fue trabajado desde un enfoque cuantitativo. Debido a que el objetivo principal era reconocer la cantidad de presupuesto p??blico designado a compras menores a 8UIT (seg??n tipo) de las diferentes municipalidades distritales de la provincia de Lima Metropolitana, espec??ficamente, las compras relacionadas al ??ltimo trimestre del a??o 2022, accedimos a la base de datos del portal CONOSCE del Organismo Supervisor de las Contrataciones del Estado - OSCE. Dicho portal concentra informaci??n relacionada a contrataciones con el estado realizada por proveedores, consorcios y entidades p??blicas.
 
-Este trabajo comprendió dos etapas: (i) Recopilación de literatura sobre el tema, y (ii) manejo de la base de datos. Por un lado, la recopilación de la literatura se centró en la revisión de la Ley de Contrataciones con el Estado, investigaciones y notas periodísticas. Por otro lado, para el manejo de la base de datos, se utilizó el lenguaje de programación de R, así como la búsqueda de paquetes para ese entorno que nos permitiera transformar la data y visualizarla a partir de mapas informativos de la provincia de Lima Metropolitana para identificar las zonas donde se concentraban lo siguientes ítems:
+Este trabajo comprendi?? dos etapas: (i) Recopilaci??n de literatura sobre el tema, y (ii) manejo de la base de datos. Por un lado, la recopilaci??n de la literatura se centr?? en la revisi??n de la Ley de Contrataciones con el Estado, investigaciones y notas period??sticas. Por otro lado, para el manejo de la base de datos, se utiliz?? el lenguaje de programaci??n de R, as?? como la b??squeda de paquetes para ese entorno que nos permitiera transformar la data y visualizarla a partir de mapas informativos de la provincia de Lima Metropolitana para identificar las zonas donde se concentraban lo siguientes ??tems:
 
-*-* Número de órdenes de servicio y compra por distrito, el cual nos ha permitido visualizar donde se concentra el mayor número de ordenes según tipo en función a cada distrito. 
-*-* Montos designados, según tipo. A partir de él se buscaba reflejar qué distrito había designado mayor presupuesto público por tipo de orden.
-*-* Concentración de proveedores. A través de él se buscaba demostrar en qué distritos existió una mayor concentración de proveedores, según tipo. 
+*-* N??mero de ??rdenes de servicio y compra por distrito, el cual nos ha permitido visualizar donde se concentra el mayor n??mero de ordenes seg??n tipo en funci??n a cada distrito. 
+*-* Montos designados, seg??n tipo. A partir de ??l se buscaba reflejar qu?? distrito hab??a designado mayor presupuesto p??blico por tipo de orden.
+*-* Concentraci??n de proveedores. A trav??s de ??l se buscaba demostrar en qu?? distritos existi?? una mayor concentraci??n de proveedores, seg??n tipo. 
 <div/>
 
 **Sobre el manejo de la data**
 
 <div style="text-align: justify">
-El portal de CONOSCE nos ofrecía descargar las bases de datos por mes, para este fin, fue: octubre, noviembre y diciembre. La información que nos importaba de ellas eran: (i) Municipalidad, (ii) RUC de la entidad, (iii) Fecha de registro, (iv) Fecha de emisión, (v) Tipo de orden, (vi) monto designado y (vii) RUC del contratista. 
+El portal de CONOSCE nos ofrec??a descargar las bases de datos por mes, para este fin, fue: octubre, noviembre y diciembre. La informaci??n que nos importaba de ellas eran: (i) Municipalidad, (ii) RUC de la entidad, (iii) Fecha de registro, (iv) Fecha de emisi??n, (v) Tipo de orden, (vi) monto designado y (vii) RUC del contratista. 
 
-Sin embargo, debido a que las bases no se encontraban divididas por distritos, y no todas las municipalidades habían emitido órdenes durante los meses establecidos, se tuvo que descargar una base adicional donde se tenía en cuenta lo siguiente: (i) Municipalidad, (ii) RUC, (iii) Distrito y (iv) Ubigeo. 
+Sin embargo, debido a que las bases no se encontraban divididas por distritos, y no todas las municipalidades hab??an emitido ??rdenes durante los meses establecidos, se tuvo que descargar una base adicional donde se ten??a en cuenta lo siguiente: (i) Municipalidad, (ii) RUC, (iii) Distrito y (iv) Ubigeo. 
 
-De esa manera, juntamos ambas bases para seguir con el proceso de manipulación de información. Posteriormente, la base resultante fue unida a la base de datos por distrito que nos ofrecía mapsPERU para la visualización de datos a través del mapa de Lima Metropolitana. 
+De esa manera, juntamos ambas bases para seguir con el proceso de manipulaci??n de informaci??n. Posteriormente, la base resultante fue unida a la base de datos por distrito que nos ofrec??a mapsPERU para la visualizaci??n de datos a trav??s del mapa de Lima Metropolitana. 
 <div/>
 
 **Sobre los paquetes de R**
@@ -51,9 +64,9 @@ De esa manera, juntamos ambas bases para seguir con el proceso de manipulación 
 <div style="text-align: justify">
 Los paquetes utilizados, fueron: `Tidyverse`, `GGPLOT2` y `mapsPERU`. 
 
-El paquete `Tidyverse` nos permitió limpiar la data, ordenar la información y crear nuevos data sets. Para el caso del paquete mapsPERU (Recuperado en: https://github.com/musajajorge/mapsPERU)  y `GGPLOT2` nos permitieron graficar el mapa de Lima Metropolitana dividida por distrito, según los ítems descritos anteriormente. 
+El paquete `Tidyverse` nos permiti?? limpiar la data, ordenar la informaci??n y crear nuevos data sets. Para el caso del paquete mapsPERU (Recuperado en: https://github.com/musajajorge/mapsPERU)  y `GGPLOT2` nos permitieron graficar el mapa de Lima Metropolitana dividida por distrito, seg??n los ??tems descritos anteriormente. 
 
-`mapsPERU` fue creado en diciembre del 2021, en él podemos encontrar bases de datos para graficar el mapa del Perú, ya sea por departamento y distrito. 
+`mapsPERU` fue creado en diciembre del 2021, en ??l podemos encontrar bases de datos para graficar el mapa del Per??, ya sea por departamento y distrito. 
 <div/>
 
 # 4. Resultados y discusi??n
@@ -129,14 +142,14 @@ map_lima <- map_DIST |> #Cargamos la base de datos sobre los distritos del Peru
 ```
 
 
-## 4.2. Cantidad de ordenes de compra y servicio, por municipalidad
+## 4.1. Cantidad de ordenes de compra y servicio, por municipalidad
 
 <div style="text-align: justify">
-En el siguiente apartado, presentaremos la cantidad de órdenes de servicio y compra obtenidas por municipalidad distrital.
+En el siguiente apartado, presentaremos la cantidad de ??rdenes de servicio y compra obtenidas por municipalidad distrital.
 
-De los resultados obtenidos observamos que, de las 43 municipalidades distritales en Lima Metropolitana, solo 23 registraron sus órdenes de servicio y 19 sus órdenes de compra.
+De los resultados obtenidos observamos que, de las 43 municipalidades distritales en Lima Metropolitana, solo 23 registraron sus ??rdenes de servicio y 19 sus ??rdenes de compra.
 
-Asimismo, como se visualiza en la **Imagen 1.**, las tres municipalidades que registraron un mayor número de órdenes de servicio fueron: Lima (7313), Miraflores (1511) y Lurigancho-Chosica (1430).  Al contrario de Chaclacayo y Puente Piedra, que solo emitió 56 y 106 órdenes de servicio respectivamente. 
+Asimismo, como se visualiza en la **Imagen 1.**, las tres municipalidades que registraron un mayor n??mero de ??rdenes de servicio fueron: Lima (7313), Miraflores (1511) y Lurigancho-Chosica (1430).  Al contrario de Chaclacayo y Puente Piedra, que solo emiti?? 56 y 106 ??rdenes de servicio respectivamente. 
 <div/>
 
 ``` {r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -155,9 +168,9 @@ db_lima_OS <- merge(x = map_lima, y = df_map_os, by = "UBIGEO", all.x = TRUE) #J
 
 OS = ggplot(db_lima_OS, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 1. Cantidad de Órdenes de Servicio IV Trim")+
+  ggtitle("Imagen 1. Cantidad de ??rdenes de Servicio IV Trim")+
   labs(x = "", y = "")+
-  scale_fill_gradient("Cantidad de órdenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")+
+  scale_fill_gradient("Cantidad de ??rdenes de servicio",low = "#FCFFDD" , high = "#26185F", na.value = "white")+
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 OS #Visualizacion de datos para OS
 
@@ -165,7 +178,7 @@ plotly::ggplotly(OS)
 ```
 
 <div style="text-align: justify">
-Para el caso de las órdenes de compra, Lima (266) y Villa María del Triunfo (106) fueron las municipalidades que concentraron una mayor cantidad de órdenes de compra. En contraposición de San Bartolo (2), Pueblo Libre (3) y Jesús María (4), que emitieron menos de 5 órdenes de compra cada una. (Ver **Imagen 2.**)
+Para el caso de las ??rdenes de compra, Lima (266) y Villa Mar??a del Triunfo (106) fueron las municipalidades que concentraron una mayor cantidad de ??rdenes de compra. En contraposici??n de San Bartolo (2), Pueblo Libre (3) y Jes??s Mar??a (4), que emitieron menos de 5 ??rdenes de compra cada una. (Ver **Imagen 2.**)
 <div/>
 
 ``` {r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -175,15 +188,15 @@ db_lima_OC <- merge(x = map_lima, y = df_map_oc, by = "UBIGEO", all.x = TRUE) #J
 
 OC=ggplot(db_lima_OC, aes(geometry = geometry)) + #creamos el mapa
   geom_sf(aes(fill = Cantidad)) +
-  ggtitle("Imagen 2. Cantidad de Órdenes de Compra IV Trim")+
+  ggtitle("Imagen 2. Cantidad de ??rdenes de Compra IV Trim")+
   labs(x = "", y = "")+
-  scale_fill_gradient("Cantidad de órdenes de compra",low = "yellow" , high = "red", na.value = "white")+
+  scale_fill_gradient("Cantidad de ??rdenes de compra",low = "yellow" , high = "red", na.value = "white")+
   theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
 OC #Visualizacion de datos para OC
 plotly::ggplotly(OC) 
 ```
 
-## 4.1. Registro oportuno de las ??rdenes de compra y servicio
+## 4.2. Registro oportuno de las ??rdenes de compra y servicio
 
 <div style="text-align: justify">
 Un primer foco de nuestra atencion reside en el registro oportuno de las ordenes de servicio. De acuerdo con la Directiva N?? 003-2020-OSCE/CD, el registro de las contrataciones en el SEACE de las ??rdenes de compra y servicio debe realizarse "(...) a partir del d??a siguiente de emitida la ??rden respectiva, siendo el plazo m??ximo de cinco d??as h??biles del mes siguiente." (OSCE, 2020). Esto quiere decir que una entidad realiza sus compras a tiempo siempre y cuando registre sus ??rdenes de compra y servicio antes del sexto d??a h??bil del mes siguiente.
@@ -256,6 +269,35 @@ plotly::ggplotly(plot_oc)
 
 ```
 
+## 4.3. 
+
+
+```{r}
+
+```
+
+## 4.4 
+
+
+```{r}
+
+```
+
 # 5. Conclusiones
+<div style="text-align: justify"> #abrir
+
+Las contrataciones con el Estado son importantes para la ejecuci??n de pol??ticas p??blicas, con el objetivo de mejorar el bienestar econ??mico y social en el ??mbito nacional, regional, provincial y distrital.
+
+En los distritos de LIma Metropolitana, en el ??ltimo trimestre del 2022, han reportado adjudicaciones directas (servicios por montos menores a 9 UIT$B!G(Bs) Por un monto total de S/ 65 340 690 del cual m??s del 31% ha sido desembolsado por la Municipalidad Metropolitana de Lima en 7313 ??rdenes de servicio.
+
+En los distritos de LIma Metropolitana, en el ??ltimo trimestre del 2022, han reportado adjudicaciones directas (compras por montos menores a 9 UIT$B!G(Bs), por un monto total de S/ 8 426 458, del cual m??s del 18% ha sido desembolsado por la Municipalidad de Villa Maria del Triunfo de Lima en 168 ??rdenes de compra.
+
+La regulaci??n en las contrataciones en los montos por debajo de las 9 UIT$B!G(Bs  ha sido escasa, lo cual ha contribuido a la poca transparencia en el registro de los mismos, lo que se ha evidenciado con el registro fuera de plazo y sin descripciones exactas.
+
+La falta de regulaci??n adecuada ocasiona supuestos de fraccionamiento y/o direccionamiento en las contrataciones de hasta 9 UIT al no existir un marco legal claro, lo cual se ha evidenciado con el an??lisis en las cantidades de ??rdenes , montos destinados y  el grado de  concentraci??n en proveedores.
+
+Considerando que las contrataciones hasta 9 UIT son de inter??s p??blico y se pagan con fondos p??blicos, los que deben ser utilizados de manera eficiente, es imperativo que las instituciones que velan las contracciones con el Estado, formulen legislaci??n para este tipo de contratos, las que deben  incluir por lo menos los procedimientos de dicha contrataci??n, los mecanismos de convocatoria, as?? como los medios de soluci??n de controversias de la misma.
+
+<div/>??#cerrar
 
 # 6. Bibliograf??a
